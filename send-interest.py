@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-  
 import argparse
 import random
 import selectors
@@ -13,7 +11,7 @@ def sendData(command):
         """Send sensor data to all peers."""
         sent = False
         # if command == 'ALERT':
-        hardcodedPeers = {('10.35.70.24', 33301)}
+        hardcodedPeers = {('10.35.70.24', 33310)}
         for peer in hardcodedPeers:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,7 +30,7 @@ def main():
     # parser = argparse.ArgumentParser()
     # parser.add_argument('--command', help='Type of sensor', required=True)
     # args = parser.parse_args()
-    command_name = ['vehicle/speed', 'vehicle/proximity', 'vehicle/tyre/pressure']
+    command_name = ['vehicle/Speed', 'vehicle/WATER', 'vehicle/FIRE']
     while True:
         for c in command_name:
             time.sleep(10)

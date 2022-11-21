@@ -178,13 +178,13 @@ def main():
     peer = Peer(host, PEER_PORT)
     t1 = threading.Thread(target=peer.broadcastIP)
     #t2 = threading.Thread(target=peer.updatePeerList)
-    t3 = threading.Thread(target=peer.listentosensor)
-    t4 = threading.Thread(target=peer.receiveData)
+    # t3 = threading.Thread(target=peer.listentosensor)
+    # t4 = threading.Thread(target=peer.receiveData)
     t1.start()
-    t4.start()
+    # t4.start()
     time.sleep(3)
     #t2.start()
-    t3.start()
+    # t3.start()
 
 
 if __name__ == '__main__':

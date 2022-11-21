@@ -21,7 +21,7 @@ def sendAck(conn, raddr, result):
             print('exception occurred while sending acknowledgement: ', Exception)
 
 def callActuator(data):
-    return 'actuation success'
+    return 'Speed: 90km/h'
 
 def receiveData():
         """Listen on own port for other peer data."""
