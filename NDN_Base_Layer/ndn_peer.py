@@ -41,7 +41,7 @@ def thread_client(threadName,ids):
         s.connect((host , port1))
         with Sem_conn_change:
             newConnection()
-        print('线程1：用于各种用户操作的客户端正在运行...')
+        print('thread_1: Client is running...')
         message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
         s.send(message)
         while True:
