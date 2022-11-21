@@ -6,7 +6,7 @@ Dictionary = {
               'SEND_SHORTNAME': 'tiliu', #send your device name 
              }
 
-port1 = 8848
+port1 = 33000
 
 #number of connection - semaphore/最大连接数量为4（可同时处理）
 sem = threading.Semaphore(2)
