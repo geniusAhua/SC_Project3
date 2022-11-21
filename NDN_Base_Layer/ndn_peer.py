@@ -33,10 +33,25 @@ def anyConnection():
     else:
         return True
 
+#to get the ip address of current device
+def get_host_ip():
+    """
+    Inquire IP address:
+    :return: ip
+    """
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+
+    return ip
+
 # 线程创建函数:
 # 线程1：与server连接的客户端线程
-def thread_client(threadName,ids):
-    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+def thread_client(threadName,ids, socket):
+    s = socket
     try:
         s.connect((host , port1))
         with Sem_conn_change:
@@ -76,8 +91,8 @@ def thread_client(threadName,ids):
 # def thread_listenServer():
 
 
-def createConnection():
-    t = threading.Thread(target = thread_client, args = ("Thread-client", 1))
+def createConnection(socket):
+    t = threading.Thread(target = thread_client, args = ("Thread-client", 1, socket))
     t.setDaemon(True)
     t.start()
 
@@ -86,9 +101,14 @@ def main():
     print('*************************************************')
     print('**                This is peer1                **')
     print('*************************************************')
+    _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    host = get_host_ip()
+    src_addr = (host, port1)
+    _socket.bind(src_addr)
+
     InitialConnection()
 
-    createConnection()
+    createConnection(_socket)
 
     while True:
         time.sleep(1)
