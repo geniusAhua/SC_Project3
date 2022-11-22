@@ -6,15 +6,15 @@ import base64
 
 PEER_PORT = 33301    # Port for listening to other peers
 SENSOR_PORT = 33401  # Port for listening to other sensors
-VEHICLE_TYPE = 'car' # bike, truck possible
+VEHICLE_TYPE = 'truck' # bike, truck possible
 
-def encode(toEncode):
+def bencode(toEncode):
     ascii_encoded = toEncode.encode("ascii")
     base64_bytes = base64.b64encode(ascii_encoded)
     base64_string = base64_bytes.decode("ascii")
     return base64_string
 
-def decode(toDecode):
+def bdecode(toDecode):
     base64_bytes = toDecode.encode("ascii")
     sample_string_bytes = base64.b64decode(base64_bytes)
     sample_string = sample_string_bytes.decode("ascii")
@@ -26,7 +26,7 @@ def sendAck(conn, raddr, result):
             # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # s.connect((raddr, SENSOR_PORT))
             msg = result
-            conn.send(encode(msg.encode()))
+            conn.send(bencode(msg).encode())
             # sent = True
             # s.close()
         except Exception:
@@ -37,13 +37,13 @@ def senseSpeed():
     baseSpeed = 20
     randomMix = random.randint(-10, 10)
     res = baseSpeed + randomMix
-    return res + " km/h"
+    return str(res) + " km/h"
 
 def senseProximity():
     baseProximity = 20
     randomMix = random.randint(-10, 10)
     res = baseProximity + randomMix
-    return res + " metres"
+    return str(res) + " metres"
 
 def sensePressure():
     if VEHICLE_TYPE == 'car':
@@ -52,7 +52,7 @@ def sensePressure():
         val = random.randint(80, 130) # two wheeler tyre pressure
     else:
         val = random.randint(116, 131) # truck tyre pressure
-    return val + " psi"
+    return str(val) + " psi"
 
 def senseLight():
     state = ['on', 'off']
@@ -67,7 +67,7 @@ def sensePassengerCount():
         val = random.randint(1, 4) # car
     else:
         val = random.randint(1, 2) # bike, truck 
-    return val 
+    return str(val) 
 
 def senseFuel():
     state = ['low', 'medium', 'full']
@@ -77,7 +77,7 @@ def senseEngineTemperature():
     baseTemp = 200
     randomMix = random.randint(-5, 20)
     res = baseTemp + randomMix
-    return res + " degree celcius"
+    return str(res) + " degree celcius"
 
 def callActuator(interest):
     if interest.lower() == "speed":
@@ -111,7 +111,7 @@ def receiveData():
             print("addr: ", addr[0])
             # print("connection: ", str(conn))
             data = conn.recv(1024)
-            data = decode(data.decode('utf-8'))
+            data = bdecode(data.decode())
             print(data, " to actuate on")
             # call actuators
             [vehicle_type, interest] = data.split('_')
