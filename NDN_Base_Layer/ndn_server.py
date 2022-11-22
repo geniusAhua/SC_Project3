@@ -55,6 +55,7 @@ def Console(sock,addr,src_addr):
             return
         except ConnectionResetError:
             print('A peer client suddenly disconnected')
+            sock.close()
             return
         
 
