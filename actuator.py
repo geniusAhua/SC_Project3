@@ -2,20 +2,31 @@ import socket
 import time
 import traceback
 import random
+import base64
 
 PEER_PORT = 33301    # Port for listening to other peers
 SENSOR_PORT = 33401  # Port for listening to other sensors
 VEHICLE_TYPE = 'car' # bike, truck possible
 
+def encode(toEncode):
+    ascii_encoded = toEncode.encode("ascii")
+    base64_bytes = base64.b64encode(ascii_encoded)
+    base64_string = base64_bytes.decode("ascii")
+    return base64_string
+
+def decode(toDecode):
+    base64_bytes = toDecode.encode("ascii")
+    sample_string_bytes = base64.b64decode(base64_bytes)
+    sample_string = sample_string_bytes.decode("ascii")
+    return sample_string
+
 def sendAck(conn, raddr, result):
         """Send sensor data to all peers."""
-        router = (raddr, SENSOR_PORT)
-
         try:
             # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # s.connect((raddr, SENSOR_PORT))
             msg = result
-            conn.send(msg.encode())
+            conn.send(encode(msg.encode()))
             # sent = True
             # s.close()
         except Exception:
@@ -100,10 +111,13 @@ def receiveData():
             print("addr: ", addr[0])
             # print("connection: ", str(conn))
             data = conn.recv(1024)
-            data = data.decode('utf-8')
+            data = decode(data.decode('utf-8'))
             print(data, " to actuate on")
             # call actuators
-            actuationResult = callActuator(data)
+            [vehicle_type, interest] = data.split('_')
+            if VEHICLE_TYPE == vehicle_type:
+              actuationResult = callActuator(interest)
+            
             sendAck(conn, addr[0], actuationResult)
             conn.close()
             time.sleep(1)
