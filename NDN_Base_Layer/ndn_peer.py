@@ -48,8 +48,6 @@ def get_host_ip():
 
     return ip
 
-# 线程创建函数:
-# 线程1：与server连接的客户端线程
 def thread_client(threadName,ids, socket):
     s = socket
     try:
