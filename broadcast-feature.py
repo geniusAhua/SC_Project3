@@ -64,24 +64,24 @@ class Peer:
                 sent = sock.send(data.out_bytes)
                 data.out_bytes = data.out_bytes[sent:]
 
-    def listentosensor(self):
-        selector = selectors.DefaultSelector()
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind((self.host, SENSOR_PORT))
-        print("Socket bound to Port for sensor:", SENSOR_PORT)
-        sock.listen()
-        # print("Listening for connections...")
-        sock.setblocking(False)
-        selector.register(sock, selectors.EVENT_READ, data=None)
-        while True:
-            events = selector.select(timeout=None)
+    # def listentosensor(self):
+    #     selector = selectors.DefaultSelector()
+    #     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     sock.bind((self.host, SENSOR_PORT))
+    #     print("Socket bound to Port for sensor:", SENSOR_PORT)
+    #     sock.listen()
+    #     # print("Listening for connections...")
+    #     sock.setblocking(False)
+    #     selector.register(sock, selectors.EVENT_READ, data=None)
+    #     while True:
+    #         events = selector.select(timeout=None)
             
-            for key, mask in events:
-                if key.data is None:
-                    self.accept_wrapper(key.fileobj, selector)
-                else:
-                    self.service_connection(key, mask, selector)
-            time.sleep(1)
+    #         for key, mask in events:
+    #             if key.data is None:
+    #                 self.accept_wrapper(key.fileobj, selector)
+    #             else:
+    #                 self.service_connection(key, mask, selector)
+    #         time.sleep(1)
 
     def broadcastIP(self):
         """Broadcast the host IP."""
@@ -95,33 +95,33 @@ class Peer:
             # print("Host IP sent!")
             time.sleep(10)
 
-    def updatePeerList(self):
-        """Update peers list on receipt of their address broadcast."""
-        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM,
-                               socket.IPPROTO_UDP)
-        client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client.bind(("", BCAST_PORT))
-        while True:
-            data, _ = client.recvfrom(1024)
-            # print("received message:", data)
-            data = data.decode('utf-8')
-            print("decoded message ", data)
-            dataMessage = data.split(' ')
-            print('Split message ', dataMessage)
-            command = dataMessage[0]
-            if command == 'HOST':
-                host = dataMessage[1]
-                port = int(dataMessage[3])
-                action = ''
-                if len(dataMessage) > 5:
-                  action = str(dataMessage[5])
-                print('Check Action '+ action)
-                peer = (host, port, action)
-                if peer != (self.host, self.port, action) and peer not in self.peers:
-                    self.peers.add(peer)
-                    print('Known vehicles:', self.peers)
-            time.sleep(2)
+    # def updatePeerList(self):
+    #     """Update peers list on receipt of their address broadcast."""
+    #     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM,
+    #                            socket.IPPROTO_UDP)
+    #     client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    #     client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    #     client.bind(("", BCAST_PORT))
+    #     while True:
+    #         data, _ = client.recvfrom(1024)
+    #         # print("received message:", data)
+    #         data = data.decode('utf-8')
+    #         print("decoded message ", data)
+    #         dataMessage = data.split(' ')
+    #         print('Split message ', dataMessage)
+    #         command = dataMessage[0]
+    #         if command == 'HOST':
+    #             host = dataMessage[1]
+    #             port = int(dataMessage[3])
+    #             action = ''
+    #             if len(dataMessage) > 5:
+    #               action = str(dataMessage[5])
+    #             print('Check Action '+ action)
+    #             peer = (host, port, action)
+    #             if peer != (self.host, self.port, action) and peer not in self.peers:
+    #                 self.peers.add(peer)
+    #                 print('Known vehicles:', self.peers)
+    #         time.sleep(2)
 
     def sendData(self, data, command):
         """Send data to all peers."""
@@ -149,18 +149,18 @@ class Peer:
         if sent:
             print("Alert sent to known vehicles")
 
-    def receiveData(self):
-        """Listen on own port for other peer data."""
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self.host, self.port))
-        s.listen(5)
-        while True:
-            conn, _ = s.accept()
-            data = conn.recv(1024)
-            data = data.decode('utf-8')
-            print(data)
-            conn.close()
-            time.sleep(1)
+    # def receiveData(self):
+    #     """Listen on own port for other peer data."""
+    #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     s.bind((self.host, self.port))
+    #     s.listen(5)
+    #     while True:
+    #         conn, _ = s.accept()
+    #         data = conn.recv(1024)
+    #         data = data.decode('utf-8')
+    #         print(data)
+    #         conn.close()
+    #         time.sleep(1)
             
     def filter_peers(self, interest):
         print('OG list', self.peers)
