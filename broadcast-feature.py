@@ -89,7 +89,7 @@ class Peer:
                                socket.IPPROTO_UDP)
         server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         server.settimeout(0.5)
-        message = f'HOST {self.host} PORT {self.port} ACTION Speed '.encode('utf-8')
+        message = f'HOST {self.host} PORT {self.port} ACTION [truck_speed, truck_proximity, truck_pressure, truck_light-on, truck_wiper-on, truck_passengers-count, truck_fuel, truck_engine-temperature]'.encode('utf-8')
         while True:
             server.sendto(message, ('<broadcast>', BCAST_PORT))
             # print("Host IP sent!")
