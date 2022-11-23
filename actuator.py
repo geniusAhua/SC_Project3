@@ -6,7 +6,7 @@ import base64
 
 PEER_PORT = 33301    # Port for listening to other peers
 SENSOR_PORT = 33401  # Port for listening to other sensors
-VEHICLE_TYPE = 'car' # bike, truck possible
+VEHICLE_TYPE = 'truck' # bike, truck possible
 
 def bencode(toEncode):
     ascii_encoded = toEncode.encode("ascii")
@@ -113,7 +113,7 @@ def receiveData():
             data = bdecode(data.decode())
             print(data, " to actuate on")
             # call actuators
-            [vehicle_type, interest] = data.split('_')
+            [vehicle_type, interest] = data.split('/')
             if VEHICLE_TYPE == vehicle_type:
               actuationResult = callActuator(interest)
             
