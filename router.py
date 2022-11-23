@@ -78,12 +78,15 @@ class Peer:
             time.sleep(2)
 
     def parse_interest(self, interest):
-        inter = interest.split("/")
-        return inter[len(inter) - 1]
+        return interest
+        # inter = interest.split("/")
+        # return inter[len(inter) - 1]
 
     def filter_ips(self, data):
         if data in map_dict.keys():
             return map_dict[data]
+        else:
+            return None
 
     def split_using_act(self, act_string):
 
@@ -118,6 +121,14 @@ class Peer:
     #         conn.close()
     #         time.sleep(1)
 
+    def send_none_to_intereseted_node(self,host,conn):
+        msg = "404 not found"
+        encoded_msg = str(self.encrypt(msg)).encode()
+        print("WHAT IS ENCODED BACK TO SENDEr", encoded_msg)
+        conn.send(encoded_msg)
+        return
+        
+
     def receiveData(self):
         """Listen on own port for other peer data."""
         print("listening for interest data")
@@ -141,8 +152,11 @@ class Peer:
             interset = self.parse_interest(base64_decode.lower())
             print("Final interset", interset)
             filtered_ips = self.filter_ips(interset)
-            ack = self.route_to_pi(filtered_ips, interset)
-            self.send_back_to_interested_node(ack, addr[0], conn)
+            if filtered_ips is None:
+                self.send_none_to_intereseted_node(addr[0],conn)
+            else:
+                ack = self.route_to_pi(filtered_ips, interset)
+                self.send_back_to_interested_node(ack, addr[0], conn)
             # call actuators
             # sendAck(addr[0], actuationResult)
             conn.close()
