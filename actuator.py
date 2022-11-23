@@ -6,7 +6,7 @@ import base64
 
 PEER_PORT = 33301    # Port for listening to other peers
 SENSOR_PORT = 33401  # Port for listening to other sensors
-VEHICLE_TYPE = 'truck' # bike, truck possible
+VEHICLE_TYPE = 'car' # bike, truck possible
 
 def bencode(toEncode):
     ascii_encoded = toEncode.encode("ascii")
@@ -98,7 +98,6 @@ def callActuator(interest):
         return senseEngineTemperature()
 
 def receiveData():
-        """Listen on own port for other peer data."""
         print("listening for actuation requests")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         hostname = socket.gethostname()
