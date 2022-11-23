@@ -22,9 +22,6 @@ def sendData(command):
         hardcodedPeers = {(ROUTER_IP, ROUTER_PORT)}
         
         print('attempting to send ', command)
-        base64encoded = bencode(command)
-        print("command before connecting to router: ", command)
-        print("base64encoded command before connecting to router: ", base64encoded)
                 
         for peer in hardcodedPeers:
             try:
@@ -32,9 +29,9 @@ def sendData(command):
                 s.connect(peer)
                 msg = command
                 base64encoded = str(bencode(msg))
+                s.send(base64encoded.encode())
                 print("Sent command: ", msg)
                 print("Sent command base64encoded: ", base64encoded)
-                s.send(base64encoded.encode())
                 ack = s.recv(1024)
                 print("Acknowledgement received", bdecode(ack.decode('utf-8')))
                 s.close()
@@ -44,7 +41,7 @@ def sendData(command):
 def main():
     # command_name = ['car/speed', 'car/proximity', 'car/light-on', 'car/wiper-on', 'car/passengers-count', 'car/fuel', 'car/engine-temperature', 'bike/speed', 'bike/proximity', 'bike/light-on', 'bike/wiper-on',
     #                 'bike/passengers-count', 'bike/fuel', 'bike/engine-temperature', 'truck_speed', 'truck/proximity', 'truck/light-on', 'truck/wiper-on', 'truck/passengers-count', 'truck/fuel', 'truck/engine-temperature']
-    command_name = ['truck_speed', 'truck_proximity', 'truck_light-on', 'truck_wiper-on', 'truck_passengers-count', 'truck_fuel', 'truck_engine-temperature']
+    command_name = ['truck/speed', 'truck/proximity', 'truck/light-on', 'truck/wiper-on', 'truck/passengers-count', 'truck/fuel', 'truck/engine-temperature']
 
     while True:
         for c in command_name:
