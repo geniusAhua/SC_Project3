@@ -17,9 +17,41 @@ def bdecode(toDecode):
     sample_string = sample_string_bytes.decode("ascii")
     return sample_string
 
-def actuate(data):
-    print("Data packet received: ", data)
-
+def actuate(interest_packet, data_packet):
+    print("Data packet received: ", data_packet, ' for interest packet ', interest_packet)
+    if interest_packet == 'truck/speed':
+        print('Truck approaching at speed ', data_packet)
+    elif interest_packet == 'truck/proximity':
+        print('Truck is near at ', data_packet)
+    elif interest_packet == 'truck/pressure':
+        print('Truck tyre pressure is at ', data_packet)
+    elif interest_packet == 'truck/light-on':
+        print('Truck light is ', data_packet)
+    elif interest_packet == 'truck/wiper-on':
+        print('Truck wiper is ', data_packet)
+    elif interest_packet == 'truck/passengers-count':
+        print('Truck is approaching with ', data_packet, ' number of passengers')
+    elif interest_packet == 'truck/fuel':
+        print('Truck is approaching with fuel at ', data_packet)
+    elif interest_packet == 'truck/engine-temperature':
+        print('Truck is appraoching with engine temperature of ', data_packet)
+    elif interest_packet == 'bike/speed':
+        print('Bike is appraoching with speed of ', data_packet)
+    elif interest_packet == 'bike/proximity':
+        print('Bike is appraoching with proximity of ', data_packet)
+    elif interest_packet == 'bike/pressure':
+        print('Bike is appraoching with tyre pressure of ', data_packet)
+    elif interest_packet == 'bike/light-on':
+        print('Bike is appraoching with headlight ', data_packet)
+    elif interest_packet == 'bike/wiper-on':
+        print('Bike is appraoching with wiper ', data_packet)
+    elif interest_packet == 'bike/passengers-count':
+        print('Bike is appraoching with passengers count ', data_packet)
+    elif interest_packet == 'bike/fuel':
+        print('Bike is appraoching with fuel quantity ', data_packet)
+    elif interest_packet == 'bike/engine-temperature':
+        print('Bike is appraoching with engine temperature of ', data_packet)
+    
 def sendInterest(interest):
         routers = {(ROUTER_IP, ROUTER_PORT)}
         print('attempting to send interest packet: ', interest)
@@ -31,15 +63,15 @@ def sendInterest(interest):
                 base64encoded = str(bencode(interest))
                 s.send(base64encoded.encode())
                 ack = s.recv(1024)
-                actuate(bdecode(ack.decode('utf-8')))
+                actuate(interest, bdecode(ack.decode('utf-8')))
                 s.close()
             except Exception:
                 print("An exception occured")
 
 def main():
-    truck_interest_packets = ['truck/speed', 'truck/proximity', 'truck/light-on', 'truck/wiper-on', 'truck/passengers-count', 'truck/fuel', 'truck/engine-temperature']
-    bike_interest_packets = ['bike/speed', 'bike/proximity', 'bike/light-on', 'bike/wiper-on', 'bike/passengers-count', 'bike/fuel', 'bike/engine-temperature']
-    car_interest_packets = ['car/speed', 'car/proximity', 'car/light-on', 'car/wiper-on', 'car/passengers-count', 'car/fuel', 'car/engine-temperature']
+    truck_interest_packets = ['truck/speed', 'interest/corrupted', 'truck/proximity', 'truck/pressure', 'truck/light-on', 'truck/wiper-on', 'truck/passengers-count', 'truck/fuel', 'truck/engine-temperature']
+    bike_interest_packets = ['bike/speed', 'interest/corrupted', 'bike/proximity', 'bike/pressure', 'bike/light-on', 'bike/wiper-on', 'bike/passengers-count', 'bike/fuel', 'bike/engine-temperature']
+    car_interest_packets = ['car/speed', 'interest/corrupted', 'car/proximity', 'car/pressure', 'car/light-on', 'car/wiper-on', 'car/passengers-count', 'car/fuel', 'car/engine-temperature']
     
     while True:
         print('\n')
