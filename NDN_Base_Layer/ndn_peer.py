@@ -57,6 +57,9 @@ def thread_client(threadName,ids, socket):
         print('thread_1: Client is running...')
         message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
         s.send(message)
+        t = threading.Thread(target=send_msg, args=(s))
+        t.setDaemon(True)
+        t.start()
         while True:
             if(getattr(s, '_closed') == True):
                 print("!!! - server has been closed - !!!")
@@ -64,9 +67,9 @@ def thread_client(threadName,ids, socket):
                 with Sem_conn_change:
                     closeConnection()
                 break
-            message = input(">>")
-            # message = base64.b64encode(message.encode())
-            s.send(message.encode())
+            # message = input(">>")
+            # # message = base64.b64encode(message.encode())
+            # s.send(message.encode())
 
         return
     except ConnectionRefusedError:
@@ -87,6 +90,11 @@ def thread_client(threadName,ids, socket):
         return
 
 # def thread_listenServer():
+
+def send_msg(sock):
+    while True:
+        message = input(">>")
+        sock.send(message.encode())
 
 
 def createConnection(socket):
