@@ -44,8 +44,12 @@ class Peer:
         s.listen(5)
         while True:
             conn, addr = s.accept()
-            print("BRaddr: ", addr[0])
-            print("BRconnection: ", str(conn))
+
+            print("Advertisement received from: ", addr[0])
+            # print("BRconnection: ", str(conn))
+            print('Known vehicles:', self.peers)
+            print("Router table now: ", tabular_display(map_dict))
+
             data = conn.recv(1024)
             # #print("Base 64 decode data updat peer", data)
             # base64_decode_data = self.decode(data)
@@ -121,13 +125,12 @@ class Peer:
     #         conn.close()
     #         time.sleep(1)
 
-    def send_none_to_intereseted_node(self,host,conn):
+    def send_none_to_intereseted_node(self, host, conn):
         msg = "404 not found"
         encoded_msg = str(self.encrypt(msg)).encode()
         print("WHAT IS ENCODED BACK TO SENDEr", encoded_msg)
         conn.send(encoded_msg)
         return
-        
 
     def receiveData(self):
         """Listen on own port for other peer data."""
@@ -150,10 +153,10 @@ class Peer:
             print("Base 64 decode data", base64_decode)
             # print(utf_data, " to actuate on")
             interset = self.parse_interest(base64_decode.lower())
-            print("Final interset", interset)
+            print("Final interest", interset)
             filtered_ips = self.filter_ips(interset)
             if filtered_ips is None:
-                self.send_none_to_intereseted_node(addr[0],conn)
+                self.send_none_to_intereseted_node(addr[0], conn)
             else:
                 ack = self.route_to_pi(filtered_ips, interset)
                 self.send_back_to_interested_node(ack, addr[0], conn)
@@ -167,8 +170,12 @@ class Peer:
         # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # s.connect((host,INTEREST_PORT))
         msg = message
-        print("Idhar aaya kya", msg)
-        encoded_msg = str(self.encrypt(msg)).encode()
+        print("Msg inside send_back_to_interested_node: ", msg)
+        # encoded_msg = 'Sensors/actuators not available to serve this request'.encode()
+        if msg is not None:
+            encoded_msg = str(self.encrypt(msg)).encode()
+        else:
+            encoded_msg = str(self.encrypt('Sensors/actuators not available to serve this request')).encode()
         print("WHAT IS ENCODED BACK TO SENDEr", encoded_msg)
         conn.send(encoded_msg)
         return
