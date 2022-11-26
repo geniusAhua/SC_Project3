@@ -31,7 +31,7 @@ class Command():
     SHUT_SHOW_MSG = 'shut show-msg'
     SEND_TO = 'send'
     CONNECT = 'connect'
-    SEARCH_CONN = 'search-connection'
+    SEARCH_CONN = 'search-conn'
 
     @staticmethod
     def not_found(input):
