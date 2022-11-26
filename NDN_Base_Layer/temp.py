@@ -17,6 +17,7 @@ Dictionary = {
               'SEND_SHORTNAME': 'tiliu3', #send your device name
               'NO_USER': 'This connection is not found. Please check the route table.',
               'USER_EXISTED': 'User has existed on socket.',
+              'BROADCAST': 'BROADCAST'
              }
 
 IP_table = {
@@ -30,6 +31,7 @@ class Command():
     SHUT_SHOW_MSG = 'shut show-msg'
     SEND_TO = 'send'
     CONNECT = 'connect'
+    SEARCH_CONN = 'search-connection'
 
     @staticmethod
     def not_found(input):
@@ -65,16 +67,17 @@ class Demo():
 
     def __init__(self):
         self.__host = self.__get_host_ip()
-        self.__port_LAN = 33000
+        self.__host_broadcast = None
         self.__shortname = Dictionary['SEND_SHORTNAME']
-        self.__host_target = '10.6.57.217'
+        self.__port_LAN = 33000
         self.__port_WAN = 33001
+        self.__port_BROADCAST = 33002
         self.__isWAN_occupied = False
         self.__Sem_conn_change = threading.Semaphore(1)
         self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 4/最大连接数量为4
         self.__socket_pool = {}
-        self.__background_tasks = []
         self.__isShow_msg = True
+        self.__isShow_bd = True
 
     def __get_host_ip(self):
         """
@@ -112,6 +115,59 @@ class Demo():
             if self.__isShow_msg:
                 print(text)
             else: return
+
+    def __echo_bc(self, text):
+        with patch_stdout():
+            if self.__isShow_bd:
+                print(text)
+            else: return
+
+    def __broadcast(self):
+        try:
+            broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_TCP)
+            broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            broad.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            broad.settimeout(0.5)
+            host_broadcast = self.__host[::-1]
+            host_broadcast = host_broadcast.replace(host_broadcast.split(':')[0], '255', 1)[::-1]
+            self.__host_broadcast = host_broadcast
+            self.__echo_bc(f'broadcast_ip: {host_broadcast}')
+            broad.bind("", self.__port_BROADCAST)
+            isDie = [False]
+            isLoop = False
+            if self.__addConnection(Dictionary['BROADCAST'], broad) == True:
+                t = threading.Thread(target = self.__broadcast_recv, args = (broad, isDie))
+                t.setDaemon(True)
+                t.start()
+                isLoop = True
+
+            while isLoop:
+                time.sleep(3)
+                if(isDie[0] == True):
+                    self.__echo_bc(f'Socket of broadcast is closed <{host_broadcast} - {self.__port_BROADCAST}>.')
+                    break
+
+        finally:
+            broad.close()
+        
+    def __broadcast_ip(self):
+        label = Dictionary['BROADCAST']
+        if label in self.__socket_pool:
+            broad = self.__socket_pool[label]
+            message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
+            broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
+            self.__echo_bc('IP has been broadcasted.')
+
+    def __broadcast_recv(self, broad, isDie):
+        try:
+            while True:
+                data, addr = broad.recvfrom()
+                self.__echo_bc(data)
+                self.__echo_bc(addr)
+
+        finally:
+            isDie[0] = True
+            return
 
     def __WAN_slot(self, target_name):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -228,7 +284,7 @@ class Demo():
     def __receive(self, sock, shortname, isDie):
         try:
             while True:
-                data = sock.recv(1024)
+                data = sock.recv()
                 data = base64.b64decode(data).decode()
                 if not data:
                     isDie[0] = True
@@ -296,6 +352,10 @@ class Demo():
             isLoop = False
             event.app.exit()
 
+        @kb.add('c-b')#
+        async def _(event):
+            self.__isShow_bd = not self.__isShow_bd
+
         #welcom text
         welcom_text = "Welcom to use ndn cli.\nYou can press 'escape' or 'Control + c' to quit.\n"
         print(welcom_text)
@@ -318,6 +378,9 @@ class Demo():
                     
                     elif command[0] == Command.SHUT_SHOW_MSG:
                         self.__do_shut_showMsg()
+
+                    elif command[0] == Command.SEARCH_CONN:
+                        self.__broadcast_ip()
 
                     elif command[0] == Command.SEND_TO:
                         if len(command) != 3:
@@ -349,16 +412,13 @@ class Demo():
 
     async def __main(self):
         with patch_stdout():
-            # for recver in self.__recvers:
-            #     bct = asyncio.create_task(self.__print_msg(task_recv, recver))
-            #     background_tasks.append(bct)
+            bct = asyncio.create_task(self.__broadcast())
             try:
-                #await send task
+                
                 await self.__cli_input()
             finally:
                 #cancell background tasks
-                for bct in self.__background_tasks:
-                    bct.cancel()
+                bct.cancel()
             print("\nQuitting CLI. Bye.\n")
 
     def run(self):
