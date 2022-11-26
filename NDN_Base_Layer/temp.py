@@ -124,7 +124,7 @@ class Demo():
 
     def __broadcast(self):
         try:
-            broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_TCP)
+            broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UCD)
             broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             broad.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
             broad.settimeout(0.5)
