@@ -48,8 +48,8 @@ def get_host_ip():
 
     return ip
 
-def thread_client(threadName,ids, socket):
-    s = socket
+def thread_client(threadName,ids, socket_):
+    s = socket_
     try:
         s.connect((host , port1))
         with Sem_conn_change:
@@ -57,16 +57,24 @@ def thread_client(threadName,ids, socket):
         print('thread_1: Client is running...')
         message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
         s.send(message)
-        t = threading.Thread(target=send_msg, args=(s))
-        t.setDaemon(True)
-        t.start()
-        while True:
-            if(getattr(s, '_closed') == True):
-                print("!!! - server has been closed - !!!")
-                s.close()
-                with Sem_conn_change:
-                    closeConnection()
-                break
+        data = s.recv(1024)
+        data = base64.b64decode(data).decode()
+        if data.split(':')[0] == 'SHORTNAME':
+            shortname = data.split(':')[1]
+            t = threading.Thread(target=send_msg, args=(s,))
+            t.setDaemon(True)
+            t.start()
+            t2 = threading.Thread(target=receive, args=(s, shortname))
+            t2.setDaemon(True)
+            t2.start()
+            while True:
+                time.sleep(3)
+                if(getattr(s, '_closed') == True):
+                    print("!!! - server has been closed - !!!")
+                    s.close()
+                    with Sem_conn_change:
+                        closeConnection()
+                    break
             # message = input(">>")
             # # message = base64.b64encode(message.encode())
             # s.send(message.encode())
@@ -81,6 +89,10 @@ def thread_client(threadName,ids, socket):
                 closeConnection()
                 print("connections: " + str(Sync_connections))
         return
+
+    except socket.timeout as e:
+        print(e)
+
     
     except BrokenPipeError:
         print("Connection was broken.")
@@ -92,10 +104,22 @@ def thread_client(threadName,ids, socket):
 # def thread_listenServer():
 
 def send_msg(sock):
-    while True:
-        message = input(">>")
-        sock.send(message.encode())
+    try:
+        while True:
+            message = input(">>")
+            message = base64.b64encode(message.encode())
+            sock.sendall(message)
+    except (EOFError, KeyboardInterrupt):
+        return
 
+def receive(sock, shortname):
+    while True:
+        data = sock.recv(1024)
+        data = base64.b64decode(data).decode()
+        if not data:
+            print("connection is closed.")
+            break
+        print(shortname + '>>' + data)
 
 def createConnection(socket):
     t = threading.Thread(target = thread_client, args = ("Thread-client", 1, socket))
@@ -111,31 +135,29 @@ def main():
     host = get_host_ip()
     src_addr = (host, port1)
     _socket.bind(src_addr)
-
+    _socket.settimeout(3)
     InitialConnection()
 
     createConnection(_socket)
-
-    while True:
-        time.sleep(1)
-        if(not anyConnection()):
-            print("no connection can be accessed.")
-            print("Are you want to try again? (yes/no)")
-            while True:
-                _comma = input(">>")
-                print("_comma: " + _comma)
-                if(_comma == "yes" or _comma == 'y'):
-                    createConnection()
-                    break
-                if (_comma == 'no' or _comma == 'n'):
-                    print("Thanks for using, Goodbye!")
-                    return
-                else:
-                    print("unknown command:" + _comma)
-
-        else:
+    try:
+        while True:
             time.sleep(5)
-            continue
+            if(not anyConnection()):
+                print("no connection can be accessed.")
+                print("Are you want to try again? (yes/no)")
+                while True:
+                    _comma = input(">>")
+                    if(_comma == "yes" or _comma == 'y'):
+                        createConnection(_socket)
+                        break
+                    if (_comma == 'no' or _comma == 'n'):
+                        print("Thanks for using, Goodbye!")
+                        return
+                    else:
+                        print("unknown command:" + _comma)
+
+    except (EOFError, KeyboardInterrupt):
+        return
 
 if __name__ == "__main__":
     main()
