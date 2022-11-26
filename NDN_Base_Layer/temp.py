@@ -127,9 +127,8 @@ class Demo():
             broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             broad.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-            broad.settimeout(0.5)
             host_broadcast = self.__host[::-1]
-            host_broadcast = host_broadcast.replace(host_broadcast.split(':')[0], '255', 1)[::-1]
+            host_broadcast = host_broadcast.replace(host_broadcast.split('.')[0], '552', 1)[::-1]
             self.__host_broadcast = host_broadcast
             self.__echo_bc(f'broadcast_ip: {host_broadcast}')
             broad.bind(("", self.__port_BROADCAST))
@@ -166,7 +165,7 @@ class Demo():
                 self.__echo_bc(addr)
 
         finally:
-            isDie[0] = True
+            # isDie[0] = True
             return
 
     def __WAN_slot(self, target_name):
@@ -412,13 +411,14 @@ class Demo():
 
     async def __main(self):
         with patch_stdout():
-            bct = asyncio.create_task(self.__broadcast())
             try:
-                
+                t = threading.Thread(target = self.__broadcast)
+                t.setDaemon(True)
+                t.start()
                 await self.__cli_input()
             finally:
                 #cancell background tasks
-                bct.cancel()
+                pass
             print("\nQuitting CLI. Bye.\n")
 
     def run(self):
