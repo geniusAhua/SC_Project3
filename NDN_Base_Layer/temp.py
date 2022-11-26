@@ -131,7 +131,6 @@ class Demo():
             host_broadcast = host_broadcast.replace(host_broadcast.split('.')[0], '552', 1)[::-1]
             self.__host_broadcast = host_broadcast
             self.__echo_bc(f'broadcast_ip: {host_broadcast}')
-            broad.bind(("", self.__port_BROADCAST))
             isDie = [False]
             isLoop = False
             if self.__addConnection(Dictionary['BROADCAST'], broad) == True:
@@ -160,6 +159,7 @@ class Demo():
             self.__echo_bc('There is no socket for socket.')
 
     def __broadcast_recv(self, broad, isDie):
+        broad.bind(("", self.__port_BROADCAST))
         try:
             while True:
                 data, addr = broad.recvfrom(2048)
