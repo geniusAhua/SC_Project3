@@ -17,7 +17,8 @@ Dictionary = {
               'SEND_SHORTNAME': 'tiliu3', #send your device name
               'NO_USER': 'This connection is not found. Please check the route table.',
               'USER_EXISTED': 'User has existed on socket.',
-              'BROADCAST': 'BROADCAST'
+              'BROADCAST': 'BROADCAST',
+              'GROUP': 'GROUP17',
              }
 
 IP_table = {
@@ -69,12 +70,14 @@ class Demo():
         self.__host = self.__get_host_ip()
         self.__host_broadcast = None
         self.__shortname = Dictionary['SEND_SHORTNAME']
+        self.__group = Dictionary['GROUP']
         self.__port_LAN = 33000
         self.__port_WAN = 33001
         self.__port_BROADCAST = 33002
         self.__isWAN_occupied = False
         self.__Sem_conn_change = threading.Semaphore(1)
         self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 4/最大连接数量为4
+        self.__Sem_IPT_change = threading.Semaphore(1)
         self.__socket_pool = {}
         self.__isShow_msg = True
         self.__isShow_bd = True
@@ -110,6 +113,11 @@ class Demo():
                     sock.close()
                     del self.__socket_pool[shortname]
 
+    def __isRight_group(self, group):
+        if group == self.__group:
+            return True
+        else: return False
+
     def __echo(self, text):
         with patch_stdout():
             if self.__isShow_msg:
@@ -144,7 +152,7 @@ class Demo():
             while isLoop:
                 time.sleep(3)
                 if(isDie[0] == True):
-                    self.__echo_bc(f'Socket of broadcast is closed <{host_broadcast} - {self.__port_BROADCAST}>.')
+                    self.__echo_bc(f'Socket of broadcast is closed <{self.__host_broadcast} - {self.__port_BROADCAST}>.')
                     break
 
         finally:
@@ -155,7 +163,7 @@ class Demo():
             label = Dictionary['BROADCAST']
             if label in self.__socket_pool:
                 broad = self.__socket_pool[label]
-                message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
+                message = base64.b64encode(f'{self.__group}/SHORTNAME:{self.__shortname}'.encode())
                 broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
                 self.__echo_bc('IP has been broadcasted.')
             else:
@@ -176,13 +184,39 @@ class Demo():
             while True:
                 data, addr = broad.recvfrom(2048)
                 data = base64.b64decode(data).decode()
-                self.__echo_bc(data)
-                self.__echo_bc(addr)
+                self.__echo_bc(str(data) + ' ' + str(addr))
+                t = threading.Thread(target=self.__process_bc, args=(data, addr))
+                t.daemon = True
+                t.start()
         except Exception as e:
             self.__echo_bc(e)
         finally:
             isDie[0] = True
             return
+
+    def __process_bc(self, data, addr):
+        conn_ip = addr[0]
+        if(conn_ip != self.__host):
+            header = data.split('/')[0]
+            if self.__isRight_group(header):
+                conn_name = data.split('/')[1].split(':')[1]
+                if conn_name not in IP_table:
+                    with self.__Sem_IPT_change:
+                        IP_table[conn_name] = conn_ip
+            else:
+                self.__echo_bc(f"The connection - {conn_ip} is illegal.")
+
+    def __search_conn(self):
+        print('Searching connection.....')
+        time.sleep(2)
+        print('Connections are shown as below:')
+        for item in IP_table:
+            print(item.key)
+            self.__echo_bc(f'debug: {item.key} - {item.value}')
+        t = threading.Thread(target=self.__broadcast_ip)
+        t.daemon = True
+        t.start()
+
 
     def __WAN_slot(self, target_name):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -395,7 +429,7 @@ class Demo():
                         self.__do_shut_showMsg()
 
                     elif command[0] == Command.SEARCH_CONN:
-                        self.__broadcast_ip()
+                        self.__search_conn()
 
                     elif command[0] == Command.SEND_TO:
                         if len(command) != 3:
