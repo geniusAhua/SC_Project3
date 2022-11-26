@@ -130,7 +130,7 @@ class Demo():
             host_broadcast = self.__host[::-1]
             host_broadcast = host_broadcast.replace(host_broadcast.split('.')[0], '552', 1)[::-1]
             # self.__host_broadcast = host_broadcast
-            self.__host_broadcast = '10.6.63.255'
+            self.__host_broadcast = '255.255.255.255'
             broad.bind(("", self.__port_BROADCAST))
             self.__echo_bc(f'broadcast_ip: {host_broadcast}')
             isDie = [False]
@@ -152,22 +152,22 @@ class Demo():
         
     def __broadcast_ip(self):
         try:
-            # label = Dictionary['BROADCAST']
-            # if label in self.__socket_pool:
-            #     broad = self.__socket_pool[label]
-            #     message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
-            #     broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
-            #     self.__echo_bc('IP has been broadcasted.')
-            # else:
-            #     self.__echo_bc('There is no socket for socket.')
-            broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            broad.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-            broad.settimeout(0.5)
-            message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
-            broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
-            self.__echo_bc('IP has been broadcasted.')
-            broad.close()
+            label = Dictionary['BROADCAST']
+            if label in self.__socket_pool:
+                broad = self.__socket_pool[label]
+                message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
+                broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
+                self.__echo_bc('IP has been broadcasted.')
+            else:
+                self.__echo_bc('There is no socket for socket.')
+            # broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            # broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            # broad.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            # broad.settimeout(0.5)
+            # message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
+            # broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
+            # self.__echo_bc('IP has been broadcasted.')
+            # broad.close()
         except Exception as e:
             self.__echo_bc(e)
 
