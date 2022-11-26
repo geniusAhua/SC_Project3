@@ -160,10 +160,12 @@ class Demo():
     def __broadcast_recv(self, broad, isDie):
         try:
             while True:
-                data, addr = broad.recvfrom()
+                data, addr = broad.recvfrom(2048)
+                data = base64.b64decode(data).decode()
                 self.__echo_bc(data)
                 self.__echo_bc(addr)
-
+        except Exception as e:
+            self.__echo_bc(e)
         finally:
             # isDie[0] = True
             return
@@ -283,7 +285,7 @@ class Demo():
     def __receive(self, sock, shortname, isDie):
         try:
             while True:
-                data = sock.recv()
+                data = sock.recv(2048)
                 data = base64.b64decode(data).decode()
                 if not data:
                     isDie[0] = True
@@ -411,13 +413,14 @@ class Demo():
 
     async def __main(self):
         with patch_stdout():
+            t = threading.Thread(target = self.__broadcast)
+            t.setDaemon(True)
+            t.start()
             try:
-                t = threading.Thread(target = self.__broadcast)
-                t.setDaemon(True)
-                t.start()
                 await self.__cli_input()
             finally:
                 #cancell background tasks
+                # bct.cancel()
                 pass
             print("\nQuitting CLI. Bye.\n")
 
