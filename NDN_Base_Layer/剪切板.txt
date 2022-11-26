@@ -1,0 +1,7 @@
+import  socket
+def  print_device_remote_info():
+      host_name = 'home.lenovo'
+      print(" Host name: %s"  %host_name)
+      print(" IP address: %s"  %socket.gethostbyname(host_name))
+if  __name__=='__main__':
+      print_device_remote_info();
