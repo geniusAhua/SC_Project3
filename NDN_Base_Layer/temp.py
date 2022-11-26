@@ -132,7 +132,7 @@ class Demo():
             host_broadcast = host_broadcast.replace(host_broadcast.split(':')[0], '255', 1)[::-1]
             self.__host_broadcast = host_broadcast
             self.__echo_bc(f'broadcast_ip: {host_broadcast}')
-            broad.bind("", self.__port_BROADCAST)
+            broad.bind(("", self.__port_BROADCAST))
             isDie = [False]
             isLoop = False
             if self.__addConnection(Dictionary['BROADCAST'], broad) == True:
