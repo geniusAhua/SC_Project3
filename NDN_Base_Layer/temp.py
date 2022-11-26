@@ -15,23 +15,41 @@ from math import ceil
 
 Dictionary = {
               'SEND_SHORTNAME': 'tiliu3', #send your device name
-              'NO_USER': 'This connection is not found. Please check the route table.'
+              'NO_USER': 'This connection is not found. Please check the route table.',
+              'USER_EXISTED': 'User has existed on socket.',
              }
 
-# COMMAND = {
-#     'OPEN_PORT': 'open-port', #open socket listener
-#     'HELP': 'help'
-# }
+IP_table = {
+    
+}
 
 class Command():
     OPEN_NET = 'open-net'
     HELP = 'help'
     SHOW_MSG = 'show-msg'
     SHUT_SHOW_MSG = 'shut show-msg'
+    SEND_TO = 'send'
+    CONNECT = 'connect'
 
     @staticmethod
     def not_found(input):
-        print(f'Command "{input}" not found')
+        print(f'Command "{input}" not found.')
+
+    @staticmethod
+    def send_success(target_name, text):
+        print(f'You have sent to {target_name} - {text}')
+
+    @staticmethod
+    def send_failed(target_name, text):
+        print(f'There has something wrong to send to {target_name} - {text}')
+
+    @staticmethod
+    def connect_success(target_name):
+        print(f'You have connect to {target_name} successfully.')
+    
+    @staticmethod
+    def connect_failed(target_name):
+        print(f'There has something wrong to connect to {target_name}.')
 
 class _Prompt():
     __cli_header = f'ndn-cli:{Dictionary["SEND_SHORTNAME"]}'
@@ -47,15 +65,16 @@ class Demo():
 
     def __init__(self):
         self.__host = self.__get_host_ip()
-        self.__port = 33000
+        self.__port_LAN = 33000
         self.__shortname = Dictionary['SEND_SHORTNAME']
         self.__host_target = '10.6.57.217'
-        self.__port_target = 33000
+        self.__port_WAN = 33001
+        self.__isWAN_occupied = False
         self.__Sem_conn_change = threading.Semaphore(1)
-        self.__Sem_conns = threading.Semaphore(3) # the maximum number of connections is 4/最大连接数量为4
+        self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 4/最大连接数量为4
         self.__socket_pool = {}
         self.__background_tasks = []
-        self.__isShow_msg = False
+        self.__isShow_msg = True
 
     def __get_host_ip(self):
         """
@@ -72,17 +91,21 @@ class Demo():
         return ip
     
     def __addConnection(self, shortname, sock):
-        with self.__Sem_conn_change:
-            self.__socket_pool[shortname] = sock
+        if shortname not in self.__socket_pool:
+            with self.__Sem_conn_change:
+                self.__socket_pool[shortname] = sock
+        else:
+            self.__echo(Dictionary['USER_EXISTED'])
+            return False
+        return True
 
     def __deleteConnection(self, shortname):
-        with self.__Sem_conn_change:
+        if shortname in self.__socket_pool:
             sock = self.__socket_pool[shortname]
             if sock:
-                sock.close()
-                self.__socket_pool.remove(shortname)
-            else:
-                print(Dictionary['NO_USER'])
+                with self.__Sem_conn_change:
+                    sock.close()
+                    del self.__socket_pool[shortname]
 
     def __echo(self, text):
         with patch_stdout():
@@ -90,70 +113,152 @@ class Demo():
                 print(text)
             else: return
 
-    def __Console(self, sock, addr, src_addr):
+    def __WAN_slot(self, target_name):
+        socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        src_addr = (self.__host, self.__port_WAN)
+        #Use a specific port to connect
+        socket_.bind(src_addr)
+        socket_.settimeout(3)
+
+        try:
+            isLoop = False
+            isDie = [False]
+            target = (IP_table[target_name], self.__port_LAN)
+            socket_.connect(target)
+            
+            print(f'Trying to connect to {target_name}......')
+            message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
+            socket_.sendall(message)
+            data = socket_.recv()
+            data = base64.b64decode(data).decode()
+
+            if data.split(':')[0] == 'SHORTNAME':
+                shortname = data.split(':')[1]
+                if shortname == target_name:
+                    self.__echo(f'Success to connect to {shortname}.')
+                    #append the connection in socket pool
+                    if self.__addConnection(target_name, socket_) == True:
+                        isLoop = True
+                        self.__isWAN_occupied = True
+                        t = threading.Thread(target = self.__receive, args = (socket_, shortname, isDie))
+                        t.setDaemon(True)
+                        t.start()
+                    else:
+                        isLoop = False
+                        self.__isWAN_occupied = False
+                else:
+                    isLoop = False
+                    self.__isWAN_occupied = False
+                    self.__echo('The name of connection does not match, please check the IP_table!!!')
+                    return
+            else:
+                isLoop = False
+                self.__isWAN_occupied = False
+                self.__echo(f'Device: <{target_name}>, is illegal. It cannot be connected')
+
+            while isLoop:
+                time.sleep(3)
+                if(isDie[0] == True):
+                    self.__echo('Connection terminate: source: ' + self.__shortname + ' --- %s:%s' %self.__host + ' --- destination: %s:%s' %src_addr)
+                    break
+            return
+        except socket.timeout:
+            print("connection timed out.")
+        except ConnectionRefusedError:
+            print(f'Failed to connect to {target_name}')
+        finally:
+            self.__isWAN_occupied = False
+            self.__deleteConnection(target_name)
+
+    def __LAN_slot(self, sock, addr, src_addr):
         with self.__Sem_conns:
             try:
                 self.__echo('set connection: source address %s:%s' %addr + ' --- destination address %s:%s'  %src_addr )
                 #when first accept the connection, we need save the shortname of the device
                 isLoop = False
+                isDie = [False]
+
                 data = sock.recv(1024)
                 data = base64.b64decode(data).decode()
+                
                 if data.split(':')[0] == 'SHORTNAME':
                     shortname = data.split(':')[1]
-                    self.__echo(shortname + "has connected to this device")
+                    self.__echo(shortname + " has connected to this device.")
                     #append the connection in socket pool
-                    self.__addConnection(shortname, sock)
-                    message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
-                    sock.send(message)
-                    isLoop = True
+                    if self.__addConnection(shortname, sock) == True:
+                        message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
+                        sock.send(message)
+                        isLoop = True
+                        t = threading.Thread(target = self.__receive, args =(sock, shortname, isDie))
+                        t.setDaemon(True)
+                        t.start()
+                    else:
+                        isLoop = False
                 else:
                     isLoop = False
                     self.__echo(f"illegal connection! ==> {data}")
                     return
+                
                 while isLoop:
-                    if(getattr(sock, '_closed') == True):
+                    time.sleep(3)
+                    if(isDie[0] == True):
                         self.__echo('Connection terminate: source: ' + shortname + ' --- %s:%s' %addr + ' --- destination: %s:%s' %src_addr)
                         break
-                    # data = sock.recv(1024)
-                    # if not data:
-                    #     sock.close()
-                    #     break
-                    # print(shortname + '>>' +data.decode())
-                    # command = data[:4].decode()
-                
-                self.__deleteConnection(shortname)
-                self.__echo('==================================================')
                 return
             except ConnectionResetError:
                 self.__echo('A peer client suddenly disconnected')
-                self.__deleteConnection(shortname)
                 return
+            finally:
+                self.__deleteConnection(shortname)
+                text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
+                text += f'        connection: {shortname} closed\n'
+                text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
+                self.__echo(text)
 
     def __send(self, shortname, text):
-        sock = self.__socket_pool[shortname]
-        if sock:
-            sock.send(text)
+        if shortname in self.__socket_pool:
+            sock = self.__socket_pool[shortname]
+            text = base64.b64encode(text.encode())
+            sock.sendall(text)
+            return True
         else:
             print(Dictionary['NO_USER'])
+            return False
 
-    
+    def __receive(self, sock, shortname, isDie):
+        try:
+            while True:
+                data = sock.recv(1024)
+                data = base64.b64decode(data).decode()
+                if not data:
+                    isDie[0] = True
+                    break
+                print(shortname + '>>' + data)
+                
+
+        except ConnectionResetError:
+            isDie[0] = True
+            return
+
+        except BrokenPipeError:
+            isDie[0] = True
+            return
     
     def __maintain_listen(self, socket_, src_addr):
         while True:
             sock_,addr_ = socket_.accept()
             try:
-                print(f'new connection: {addr_}')
-                t = threading.Thread(target = self.__Console, args = (sock_,addr_,src_addr))
+                self.__echo(f'new connection: {addr_}')
+                t = threading.Thread(target = self.__LAN_slot, args = (sock_,addr_,src_addr))
                 t.setDaemon(True)
                 t.start()
             except:
                 print ("Error: Failed to create a new thread")
-
     
     def __listen_host(self):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("IP address of current device: " + self.__host)
-        src_addr = (self.__host, self.__port)
+        src_addr = (self.__host, self.__port_LAN)
         socket_.bind(src_addr)
         #set the num of wating connection application
         socket_.listen(0)
@@ -166,26 +271,14 @@ class Demo():
         maintain_listen.setDaemon(True)
         maintain_listen.start()
 
-    def do_recieve_from(self, shortname):
-        sock = self.__socket_pool[shortname]
-        try:
-            while True:
-                data = sock.recv(1024)
-                if not data:
-                    sock.close()
-                    break
-                print(shortname + '>>' +data.decode())
-                command = data[:4].decode()
-
-        except ConnectionResetError:
-            print('A peer client suddenly disconnected')
-            self.__deleteConnection(shortname)
-            return
-
-        except BrokenPipeError:
-            print("Connection was broken.")
-            self.__deleteConnection(shortname)
-            return
+    def __connect_to(self, target_name):
+        if self.__isWAN_occupied == False:
+            t = threading.Thread(target = self.__WAN_slot, args = (target_name,))
+            t.setDaemon(True)
+            t.start()
+            return True
+        else:
+            return False
 
     def __do_showMsg(self):
         self.__isShow_msg = True
@@ -193,24 +286,12 @@ class Demo():
     def __do_shut_showMsg(self):
         self.__isShow_msg = False
 
-
-    
-
-
-    async def __print_msg(self, task):
-        try:
-            await task()
-        except asyncio.CancelledError:
-            print(f"{self.__shortname}: this chat-listener cancelled")
-            return
-
     async def __cli_input(self):
         #add a key binding to quit the cli
         isLoop = True
         kb = KeyBindings()
         @kb.add('escape')
         async def _(event):
-            print("quit cli")
             nonlocal isLoop
             isLoop = False
             event.app.exit()
@@ -224,19 +305,44 @@ class Demo():
         #Run echo loop.
         while isLoop:
             try:
-                command = await session.prompt_async(prompt, key_bindings = kb)
-                if command == Command.OPEN_NET:
-                    self.__listen_host()
-                    prompt = _Prompt.running_bind
+                commandline = await session.prompt_async(prompt, key_bindings = kb)
+                if commandline != None and commandline != '':
+                    command = commandline.split(" ")
 
-                elif command == Command.SHOW_MSG:
-                    self.__do_showMsg()
-                
-                elif command == Command.SHUT_SHOW_MSG:
-                    self.__do_shut_showMsg()
+                    if command[0] == Command.OPEN_NET:
+                        self.__listen_host()
+                        prompt = _Prompt.running_bind
+
+                    elif command[0] == Command.SHOW_MSG:
+                        self.__do_showMsg()
                     
-                else:
-                    Command.not_found(command)
+                    elif command[0] == Command.SHUT_SHOW_MSG:
+                        self.__do_shut_showMsg()
+
+                    elif command[0] == Command.SEND_TO:
+                        if len(command) is not 3:
+                            print(f"The expression is wrong. please check it. {command[0]} -name -text")
+                        else:
+                            target_name = commandline.split(" ")[1]
+                            text = commandline.split(" ")[2]
+                            if self.__send(target_name, text) == True:
+                                Command.send_success(target_name, text)
+                            else:
+                                Command.send_failed(target_name, text)
+
+                    elif command[0] == Command.CONNECT:
+                        if len(command) is not 2:
+                            print(f'f"The expression is wrong. please check it. {command[0]} -name')
+                        else:
+                            target_name = commandline.split(' ')[1]
+                            if self.__connect_to(target_name) == True:
+                                Command.connect_success(target_name)
+                            else:
+                                Command.connect_failed(target_name)
+                        pass
+                        
+                    elif command != None:
+                        Command.not_found(command)
 
             except (EOFError, KeyboardInterrupt):
                 return
@@ -253,7 +359,7 @@ class Demo():
                 #cancell background tasks
                 for bct in self.__background_tasks:
                     bct.cancel()
-            print("Quitting CLI. Bye.")
+            print("\nQuitting CLI. Bye.\n")
 
     def run(self):
         try:
