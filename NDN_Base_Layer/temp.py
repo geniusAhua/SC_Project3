@@ -320,7 +320,7 @@ class Demo():
                         self.__do_shut_showMsg()
 
                     elif command[0] == Command.SEND_TO:
-                        if len(command) is not 3:
+                        if len(command) != 3:
                             print(f"The expression is wrong. please check it. {command[0]} -name -text")
                         else:
                             target_name = commandline.split(" ")[1]
@@ -331,7 +331,7 @@ class Demo():
                                 Command.send_failed(target_name, text)
 
                     elif command[0] == Command.CONNECT:
-                        if len(command) is not 2:
+                        if len(command) != 2:
                             print(f'f"The expression is wrong. please check it. {command[0]} -name')
                         else:
                             target_name = commandline.split(' ')[1]
