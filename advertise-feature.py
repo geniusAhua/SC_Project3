@@ -4,7 +4,7 @@ import time
 
 PEER_PORT = 33301    # Port for listening to other peers
 
-ROUTER_HOST = '10.35.70.24'
+ROUTER_HOST = '10.35.70.28'
 ROUTER_PORT = 33334
 
 advertise_string = '[truck/speed, truck/proximity, truck/pressure, truck/light-on, truck/wiper-on, truck/passengers-count, truck/fuel, truck/engine-temperature]'
