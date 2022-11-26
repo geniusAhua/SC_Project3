@@ -156,6 +156,8 @@ class Demo():
             message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
             broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
             self.__echo_bc('IP has been broadcasted.')
+        else:
+            self.__echo_bc('There is no socket for socket.')
 
     def __broadcast_recv(self, broad, isDie):
         try:
@@ -167,7 +169,7 @@ class Demo():
         except Exception as e:
             self.__echo_bc(e)
         finally:
-            # isDie[0] = True
+            isDie[0] = True
             return
 
     def __WAN_slot(self, target_name):
