@@ -207,16 +207,15 @@ class Demo():
                 self.__echo_bc(f"The connection - {conn_ip} is illegal.")
 
     def __search_conn(self):
+        t = threading.Thread(target=self.__broadcast_ip)
+        t.daemon = True
+        t.start()
         print('Searching connection.....')
         time.sleep(2)
         print('Connections are shown as below:')
         for item in IP_table:
             print(item.key)
             self.__echo_bc(f'debug: {item.key} - {item.value}')
-        t = threading.Thread(target=self.__broadcast_ip)
-        t.daemon = True
-        t.start()
-
 
     def __WAN_slot(self, target_name):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
