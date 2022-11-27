@@ -212,10 +212,13 @@ class Demo():
         t.start()
         print('Searching connection.....')
         time.sleep(2)
-        print('Connections are shown as below:')
-        for item in IP_table:
-            print(item.key)
-            self.__echo_bc(f'debug: {item.key} - {item.value}')
+        if len(IP_table) != 0:
+            print('Connections are shown as below:')
+            for name, ip in IP_table.items():
+                print(name)
+                self.__echo_bc(f'debug: {name} - {ip}')
+        else:
+            print('No connection has been found.')
 
     def __WAN_slot(self, target_name):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
