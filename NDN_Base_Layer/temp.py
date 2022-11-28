@@ -30,14 +30,16 @@ class SendType():
     CHAT = 'CHAT'
     INTEREST = 'INTEREST'
     DATA = 'DATA'
+    ROUTE = 'ROUTE'
 
-    def __init__(self, shortname):
+    def __init__(self, shortname, targetname):
         self.__shortname = shortname
+        self.__targetname = targetname
 
     def __sendCHAT(self, param):
         package = {
             1: True,
-            2: f"CHAT://{self.__shortname}:{param}",
+            2: f"CHAT:{self.__targetname}//{self.__shortname}:{param}",
         }
         return package
 
@@ -54,6 +56,12 @@ class SendType():
             2: f"DATA://{param}",
         }
         return package
+
+    def __sendROUTE(self, param):
+        package = {
+            1: True,
+            2: f"ROUTE://{param}"
+        }
 
     def __Default(self, param):
         package = {
@@ -119,6 +127,7 @@ class Demo():
         self.__Sem_IPT_change = threading.Semaphore(1)
         self.__socket_pool = {}
         self.__isShow_msg = True
+        self.__isShow_recv = True
         self.__isShow_bd = True
         self.__isRun_net = False
 
@@ -167,6 +176,12 @@ class Demo():
     def __echo_bc(self, text):
         with patch_stdout():
             if self.__isShow_bd:
+                print(text)
+            else: return
+
+    def __echo_recv(self, text):
+        with patch_stdout():
+            if self.__isShow_recv:
                 print(text)
             else: return
 
@@ -295,12 +310,12 @@ class Demo():
             else:
                 isLoop = False
                 self.__isWAN_occupied = False
-                self.__echo(f'Device: <{target_name}>, is illegal. It cannot be connected')
+                print(f'Device: <{target_name}>, is illegal. It cannot be connected')
 
             while isLoop:
                 time.sleep(3)
                 if(isDie[0] == True):
-                    self.__echo('Connection terminate: source: ' + self.__shortname + ' --- %s:%s' %src_addr + ' --- destination: %s:%s' %target)
+                    print('Connection terminate: source: ' + self.__shortname + ' --- destination: ' + sendername)
                     break
             
         except socket.timeout:
@@ -331,7 +346,7 @@ class Demo():
                     sendername = data.split(':')[1]
                     #append the connection in socket pool
                     if self.__addConnection(sendername, sock) == True:
-                        self.__echo(sendername + " has connected to this device.")
+                        print(sendername + " has connected to this device.")
                         message = base64.b64encode(f'SHORTNAME:{self.__shortname}'.encode())
                         sock.send(message)
                         isLoop = True
@@ -349,7 +364,7 @@ class Demo():
                 while isLoop:
                     time.sleep(3)
                     if(isDie[0] == True):
-                        self.__echo('Connection terminate: source: ' + sendername + ' --- destination: ' + self.__)
+                        print('Connection terminate: source: ' + sendername + ' --- destination: ' + self.__shortname)
                         break
                 return
             except ConnectionResetError:
@@ -367,7 +382,7 @@ class Demo():
                     sock.close()
 
     def __send(self, targetname, text, type_):
-        send_filter = SendType(self.__shortname)
+        send_filter = SendType(self.__shortname, self.__targetname)
         if targetname in self.__socket_pool:
             sock = self.__socket_pool[targetname]
             pack = send_filter.send_(type_, text)
@@ -392,8 +407,29 @@ class Demo():
                 if not data:
                     isDie[0] = True
                     break
-                self.__echo("previous node: " + sendername + ', data: ' + data)
-                
+                self.__echo_recv("previous node: " + sendername + ', data: ' + data)
+                type_ = data.split('//')[0].split(':')[0]
+                if type_ == SendType.CHAT:
+                    header, param = data.split('//')
+                    targetname = header.split(':')[1]
+                    t = threading.Thread(target = self.__recvCHAT, args = (targetname, param))
+                    t.setDaemon(True)
+                    t.start()
+                elif type_ == SendType.ROUTE:
+                    param = data.split('//')[1]
+                    t = threading.Thread(target = self.__recvROUTE, args = (param,))
+                    t.setDaemon(True)
+                    t.start()
+                elif type_ == SendType.INTEREST:
+                    param = data.split('//')[1]
+                    t = threading.Thread(target = self.__recvINTEREST, args = (param,))
+                    t.setDaemon(True)
+                    t.start()
+                elif type_ == SendType.DATA:
+                    param = data.split('//')[1]
+                    t = threading.Thread(target = self.__recvDATA, args = (param,))
+                    t.setDaemon(True)
+                    t.start()
 
         except ConnectionResetError:
             isDie[0] = True
@@ -405,6 +441,32 @@ class Demo():
         finally:
             isDie[0] = True
             return
+
+    def __recvCHAT(self, targetname, param):
+        if targetname == self.__shortname:
+            sendername = param.split(':')[0]
+            msg = param.split(':')[1]
+            print(f'{SendType.CHAT}: {sendername}>>{msg}')
+        else:
+            #TODO
+            pass
+
+    def __recvROUTE(self, param):
+        #TODO
+        
+        pass
+
+    def __recvINTEREST(self, param):
+        #TODO
+        pass
+
+    def __recvDATA(self, param):
+        #TODO
+        pass
+
+    def __updataROUTE(self, param):
+        #TODO
+        pass
     
     def __maintain_listen(self, socket_, src_addr):
         while True:
@@ -463,9 +525,13 @@ class Demo():
             isLoop = False
             event.app.exit()
 
-        @kb.add('c-b')#
+        @kb.add('c-b')#debug broadcast
         async def _(event):
             self.__isShow_bd = not self.__isShow_bd
+
+        @kb.add('c-d')#debug recv
+        async def _(event):
+            self.__isShow_recv = not self.__isShow_recv
 
         #welcom text
         welcom_text = "Welcom to use ndn cli.\nYou can press 'escape' or 'Control + c' to quit.\n"
