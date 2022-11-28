@@ -234,15 +234,16 @@ class Demo():
     def __broadcast_ip(self):
         try:
             while True:
-                label = Dictionary['BROADCAST']
-                if label in self.__socket_pool:
-                    broad = self.__socket_pool[label]
-                    message = base64.b64encode(f'{self.__group}/SHORTNAME:{self.__shortname}'.encode())
-                    broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
-                    self.__echo_bc('IP has been broadcasted.')
-                else:
-                    self.__echo_bc('There is no socket for socket.')
-                time.sleep(5)
+                if self.__shortname:
+                    label = Dictionary['BROADCAST']
+                    if label in self.__socket_pool:
+                        broad = self.__socket_pool[label]
+                        message = base64.b64encode(f'{self.__group}/SHORTNAME:{self.__shortname}'.encode())
+                        broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
+                        self.__echo_bc('IP has been broadcasted.')
+                    else:
+                        self.__echo_bc('There is no socket for socket.')
+                    time.sleep(5)
         except Exception as e:
             self.__echo_bc(e)
 
