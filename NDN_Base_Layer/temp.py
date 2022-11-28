@@ -111,7 +111,7 @@ class Demo():
     def __init__(self):
         self.__host = self.__get_host_ip()
         self.__host_broadcast = None
-        self.__shortname = Dictionary['SEND_SHORTNAME']
+        self.__shortname = Dictionary['SHORTNAME']
         self.__group = Dictionary['GROUP']
         self.__port_LAN = 33000
         self.__port_WAN = 33001
