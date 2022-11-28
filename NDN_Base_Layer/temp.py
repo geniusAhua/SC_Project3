@@ -116,6 +116,7 @@ class Demo():
         self.__port_LAN = 33000
         self.__port_WAN = 33001
         self.__port_BROADCAST = 33002
+        self.__recv_size = 2048#1024/2048/3072
         self.__isWAN_occupied = False
         self.__Sem_conn_change = threading.Semaphore(1)
         self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 4/最大连接数量为4
@@ -224,7 +225,7 @@ class Demo():
     def __broadcast_recv(self, broad, isDie):
         try:
             while True:
-                data, addr = broad.recvfrom(2048)
+                data, addr = broad.recvfrom(self.__recv_size)
                 data = base64.b64decode(data).decode()
                 self.__echo_bc(str(data) + ' ' + str(addr))
                 t = threading.Thread(target=self.__process_bc, args=(data, addr))
@@ -278,7 +279,7 @@ class Demo():
             print(f'Trying to connect to {target_name}......')
             message = base64.b64encode(f'SHORTNAME:{self.__shortname}'.encode())
             socket_.sendall(message)
-            data = socket_.recv()
+            data = socket_.recv(self.__recv_size)
             data = base64.b64decode(data).decode()
 
             if data.split(':')[0] == 'SHORTNAME':
@@ -327,7 +328,7 @@ class Demo():
                 isLoop = False
                 isDie = [False]
 
-                data = sock.recv(1024)
+                data = sock.recv(self.__recv_size)
                 data = base64.b64decode(data).decode()
                 
                 if data.split(':')[0] == 'SHORTNAME':
@@ -362,7 +363,7 @@ class Demo():
                 text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
                 text += f'        connection: {sendername} closed\n'
                 text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
-                self.__echo(text)
+                self.print(text)
 
     def __send(self, targetname, text, type_):
         send_filter = SendType(self.__shortname)
@@ -379,7 +380,7 @@ class Demo():
     def __receive(self, sock, sendername, isDie):
         try:
             while True:
-                data = sock.recv(2048)#1024/2048/3072
+                data = sock.recv(self.__recv_size)
                 data = base64.b64decode(data).decode()
                 if not data:
                     isDie[0] = True
