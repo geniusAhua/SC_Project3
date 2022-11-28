@@ -369,10 +369,15 @@ class Demo():
         send_filter = SendType(self.__shortname)
         if targetname in self.__socket_pool:
             sock = self.__socket_pool[targetname]
-            msg = send_filter.send_(type_, text)
-            self.__echo(msg)
-            msg = base64.b64encode(msg.encode())
-            sock.sendall(msg)
+            pack = send_filter.send_(type_, text)
+            if pack[1] == True:
+                msg = pack[2]
+                self.__echo(msg)
+                msg = base64.b64encode(msg.encode())
+                sock.sendall(msg)
+            else:
+                print(pack[2])
+                return False
             return True
         else:
             print(Dictionary['NO_USER'])
