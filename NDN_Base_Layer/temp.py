@@ -115,7 +115,7 @@ class Demo():
         self.__recv_size = 2048#1024/2048/3072
         self.__isWAN_occupied = False
         self.__Sem_conn_change = threading.Semaphore(1)
-        self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 2/最大连接数量为4
+        self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 2/最大连接数量为2
         self.__Sem_IPT_change = threading.Semaphore(1)
         self.__socket_pool = {}
         self.__isShow_msg = True
@@ -311,6 +311,7 @@ class Demo():
             socket_.close()
             print("WAN slot has been released.")
             self.__isWAN_occupied = False
+            print(f'isDie from wan: {isDie[0]}')
             if isDie[0]:
                 self.__deleteConnection(target_name)
 
