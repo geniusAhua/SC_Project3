@@ -115,7 +115,7 @@ class Demo():
         self.__recv_size = 2048#1024/2048/3072
         self.__isWAN_occupied = False
         self.__Sem_conn_change = threading.Semaphore(1)
-        self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 4/最大连接数量为4
+        self.__Sem_conns = threading.Semaphore(2) # the maximum number of connections is 2/最大连接数量为4
         self.__Sem_IPT_change = threading.Semaphore(1)
         self.__socket_pool = {}
         self.__isShow_msg = True
@@ -354,6 +354,7 @@ class Demo():
                 self.__echo('A peer client suddenly disconnected')
                 return
             finally:
+                print(f'isDie: {isDie[0]}')
                 if isDie[0] == True:
                     self.__deleteConnection(sendername)
                 text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
