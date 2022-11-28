@@ -309,9 +309,8 @@ class Demo():
             print(f'Failed to connect to {target_name}')
         finally:
             socket_.close()
-            print("WAN slot has been released.")
+            print("WAN slot is released now.")
             self.__isWAN_occupied = False
-            print(f'isDie from wan: {isDie[0]}')
             if isDie[0]:
                 self.__deleteConnection(target_name)
 
@@ -358,10 +357,10 @@ class Demo():
                 print(f'isDie: {isDie[0]}')
                 if isDie[0] == True:
                     self.__deleteConnection(sendername)
-                text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
-                text += f'        connection: {sendername} closed\n'
-                text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
-                print(text)
+                    text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
+                    text += f'        connection: {sendername} closed\n'
+                    text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
+                    print(text)
 
     def __send(self, targetname, text, type_):
         send_filter = SendType(self.__shortname)
