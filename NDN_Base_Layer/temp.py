@@ -53,7 +53,7 @@ class SendType():
     def __sendDATA(self, param):
         package = {
             1: True,
-            2: f"DATA://{param}",
+            2: f"DATA://{param}",#param = {dataname}:{data}
         }
         return package
 
@@ -461,10 +461,6 @@ class Demo():
         pass
 
     def __recvDATA(self, param):
-        #TODO
-        pass
-
-    def __updataROUTE(self, param):
         #TODO
         pass
     
