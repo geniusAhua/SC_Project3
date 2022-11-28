@@ -14,7 +14,7 @@ from prompt_toolkit.application import run_in_terminal
 from math import ceil
 
 Dictionary = {
-              'SEND_SHORTNAME': 'tiliu3', #send your device name
+              'SHORTNAME': 'tiliu3', #send your device name
               'NO_USER': 'This connection is not found. Please check the route table.',
               'USER_EXISTED': 'User has existed on socket.',
               'BROADCAST': 'BROADCAST',
@@ -24,6 +24,48 @@ Dictionary = {
 IP_table = {
     
 }
+
+class SendType():
+    #The values of these variables must be as same as the end of private function
+    CHAT = 'CHAT'
+    INTEREST = 'INTEREST'
+    DATA = 'DATA'
+
+    def __init__(self, shortname):
+        self.__shortname = shortname
+
+    def __sendCHAT(self, param):
+        package = {
+            1: True,
+            2: f"CHAT://{self.__shortname}:{param}",
+        }
+        return package
+
+    def __sendINTEREST(self, param):
+        package = {
+            1: True,
+            2: f"INTEREST://{param}",
+        }
+        return package
+
+    def __sendDATA(self, param):
+        package = {
+            1: True,
+            2: f"DATA://{param}",
+        }
+        return package
+
+    def __Default(self, param):
+        package = {
+            1: False,
+            2: f"Can't send this type of packag: {param}",
+        }
+        return package
+
+    def send_(self, type_, param):
+        sendtype = "_SendType__send" + type_
+        fun = getattr(self, sendtype, self.__Default)
+        return fun(param)
 
 class Command():
     OPEN_NET = 'open-net'
@@ -55,7 +97,7 @@ class Command():
         print(f'There has something wrong to connect to {target_name}.')
 
 class _Prompt():
-    __cli_header = f'ndn-cli:{Dictionary["SEND_SHORTNAME"]}'
+    __cli_header = f'ndn-cli:{Dictionary["SHORTNAME"]}'
     @staticmethod
     def begining():
         return _Prompt.__cli_header + ' >'
@@ -234,20 +276,20 @@ class Demo():
             socket_.connect(target)
             
             print(f'Trying to connect to {target_name}......')
-            message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
+            message = base64.b64encode(f'SHORTNAME:{self.__shortname}'.encode())
             socket_.sendall(message)
             data = socket_.recv()
             data = base64.b64decode(data).decode()
 
             if data.split(':')[0] == 'SHORTNAME':
-                shortname = data.split(':')[1]
-                if shortname == target_name:
-                    self.__echo(f'Success to connect to {shortname}.')
+                sendername = data.split(':')[1]
+                if sendername == target_name:
+                    self.__echo(f'Success to connect to {sendername}.')
                     #append the connection in socket pool
                     if self.__addConnection(target_name, socket_) == True:
                         isLoop = True
                         self.__isWAN_occupied = True
-                        t = threading.Thread(target = self.__receive, args = (socket_, shortname, isDie))
+                        t = threading.Thread(target = self.__receive, args = (socket_, sendername, isDie))
                         t.setDaemon(True)
                         t.start()
                     else:
@@ -289,14 +331,14 @@ class Demo():
                 data = base64.b64decode(data).decode()
                 
                 if data.split(':')[0] == 'SHORTNAME':
-                    shortname = data.split(':')[1]
-                    self.__echo(shortname + " has connected to this device.")
+                    sendername = data.split(':')[1]
+                    self.__echo(sendername + " has connected to this device.")
                     #append the connection in socket pool
-                    if self.__addConnection(shortname, sock) == True:
-                        message = base64.b64encode(f'SHORTNAME:{Dictionary["SEND_SHORTNAME"]}'.encode())
+                    if self.__addConnection(sendername, sock) == True:
+                        message = base64.b64encode(f'SHORTNAME:{self.__shortname}'.encode())
                         sock.send(message)
                         isLoop = True
-                        t = threading.Thread(target = self.__receive, args =(sock, shortname, isDie))
+                        t = threading.Thread(target = self.__receive, args =(sock, sendername, isDie))
                         t.setDaemon(True)
                         t.start()
                     else:
@@ -309,22 +351,25 @@ class Demo():
                 while isLoop:
                     time.sleep(3)
                     if(isDie[0] == True):
-                        self.__echo('Connection terminate: source: ' + shortname + ' --- %s:%s' %addr + ' --- destination: %s:%s' %src_addr)
+                        self.__echo('Connection terminate: source: ' + sendername + ' --- %s:%s' %addr + ' --- destination: %s:%s' %src_addr)
                         break
                 return
             except ConnectionResetError:
                 self.__echo('A peer client suddenly disconnected')
                 return
             finally:
-                self.__deleteConnection(shortname)
+                self.__deleteConnection(sendername)
                 text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
-                text += f'        connection: {shortname} closed\n'
+                text += f'        connection: {sendername} closed\n'
                 text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
                 self.__echo(text)
 
-    def __send(self, shortname, text):
-        if shortname in self.__socket_pool:
-            sock = self.__socket_pool[shortname]
+    def __send(self, targetname, text, type):
+        send_filter = SendType(self.__shortname)
+        if targetname in self.__socket_pool:
+            sock = self.__socket_pool[targetname]
+            # TODO:
+
             text = base64.b64encode(text.encode())
             sock.sendall(text)
             return True
@@ -332,15 +377,15 @@ class Demo():
             print(Dictionary['NO_USER'])
             return False
 
-    def __receive(self, sock, shortname, isDie):
+    def __receive(self, sock, sendername, isDie):
         try:
             while True:
-                data = sock.recv(2048)
+                data = sock.recv(2048)#1024/2048/3072
                 data = base64.b64decode(data).decode()
                 if not data:
                     isDie[0] = True
                     break
-                print(shortname + '>>' + data)
+                self.__echo("previous node: " + sendername + ', data: ' + data)
                 
 
         except ConnectionResetError:
