@@ -120,6 +120,7 @@ class Demo():
         self.__socket_pool = {}
         self.__isShow_msg = True
         self.__isShow_bd = True
+        self.__isRun_net = False
 
     def __get_host_ip(self):
         """
@@ -148,8 +149,8 @@ class Demo():
         if shortname in self.__socket_pool:
             sock = self.__socket_pool[shortname]
             if sock:
+                sock.close()
                 with self.__Sem_conn_change:
-                    sock.close()
                     del self.__socket_pool[shortname]
 
     def __isRight_group(self, group):
@@ -195,6 +196,7 @@ class Demo():
                     break
 
         finally:
+            broad.close()
             self.__deleteConnection(Dictionary['BROADCAST'])
         
     def __broadcast_ip(self):
@@ -253,7 +255,7 @@ class Demo():
 
     def __WAN_slot(self, target_name):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        src_addr = (self.__host, self.__port_WAN)
+        src_addr = ("", self.__port_WAN)
         #Use a specific port to connect
         socket_.bind(src_addr)
         socket_.settimeout(3)
@@ -290,7 +292,6 @@ class Demo():
                     isLoop = False
                     self.__isWAN_occupied = False
                     self.__echo('The name of connection does not match, please check the IP_table!!!')
-                    return
             else:
                 isLoop = False
                 self.__isWAN_occupied = False
@@ -301,17 +302,17 @@ class Demo():
                 if(isDie[0] == True):
                     self.__echo('Connection terminate: source: ' + self.__shortname + ' --- %s:%s' %src_addr + ' --- destination: %s:%s' %target)
                     break
-            return
+            
         except socket.timeout:
             print("connection timed out.")
-            socket_.close()
         except ConnectionRefusedError:
             print(f'Failed to connect to {target_name}')
-            socket_.close()
         finally:
+            socket_.close()
             print("WAN slot has been released.")
             self.__isWAN_occupied = False
-            self.__deleteConnection(target_name)
+            if isDie[0]:
+                self.__deleteConnection(target_name)
 
     def __LAN_slot(self, sock, addr, src_addr):
         with self.__Sem_conns:
@@ -326,9 +327,9 @@ class Demo():
                 
                 if data.split(':')[0] == 'SHORTNAME':
                     sendername = data.split(':')[1]
-                    self.__echo(sendername + " has connected to this device.")
                     #append the connection in socket pool
                     if self.__addConnection(sendername, sock) == True:
+                        self.__echo(sendername + " has connected to this device.")
                         message = base64.b64encode(f'SHORTNAME:{self.__shortname}'.encode())
                         sock.send(message)
                         isLoop = True
@@ -337,6 +338,7 @@ class Demo():
                         t.start()
                     else:
                         isLoop = False
+                        return
                 else:
                     isLoop = False
                     self.__echo(f"illegal connection! ==> {data}")
@@ -352,7 +354,8 @@ class Demo():
                 self.__echo('A peer client suddenly disconnected')
                 return
             finally:
-                self.__deleteConnection(sendername)
+                if isDie[0] == True:
+                    self.__deleteConnection(sendername)
                 text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
                 text += f'        connection: {sendername} closed\n'
                 text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
@@ -395,14 +398,13 @@ class Demo():
             isDie[0] = True
             return
         finally:
-            print(f'{sock} has something wrong -- {sendername}')
             isDie[0] = True
             return
     
     def __maintain_listen(self, socket_, src_addr):
         while True:
-            sock_,addr_ = socket_.accept()
             try:
+                sock_,addr_ = socket_.accept()
                 self.__echo(f'new connection: {addr_}')
                 t = threading.Thread(target = self.__LAN_slot, args = (sock_,addr_,src_addr))
                 t.setDaemon(True)
@@ -411,20 +413,24 @@ class Demo():
                 print ("Error: Failed to create a new thread")
     
     def __listen_host(self):
-        socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("IP address of current device: " + self.__host)
-        src_addr = (self.__host, self.__port_LAN)
-        socket_.bind(src_addr)
-        #set the num of wating connection application
-        socket_.listen(0)
-        print('======================start=======================')
-        print('                service is running...')
-        print('=======================end========================')
+        if not self.__isRun_net:
+            socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print("IP address of current device: " + self.__host)
+            src_addr = (self.__host, self.__port_LAN)
+            socket_.bind(src_addr)
+            #set the num of wating connection application
+            socket_.listen(0)
+            print('======================start=======================')
+            print('                service is running...')
+            print('=======================end========================')
 
-        # to maintain listening the host
-        maintain_listen = threading.Thread(target = self.__maintain_listen, args = (socket_, src_addr))
-        maintain_listen.setDaemon(True)
-        maintain_listen.start()
+            # to maintain listening the host
+            maintain_listen = threading.Thread(target = self.__maintain_listen, args = (socket_, src_addr))
+            maintain_listen.setDaemon(True)
+            maintain_listen.start()
+            self.__isRun_net = True
+        else:
+            print("You have already started the net.")
 
     def __connect_to(self, target_name):
         if self.__isWAN_occupied == False:
