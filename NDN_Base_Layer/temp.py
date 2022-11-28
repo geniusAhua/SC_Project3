@@ -363,13 +363,14 @@ class Demo():
                 text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
                 text += f'        connection: {sendername} closed\n'
                 text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
-                self.print(text)
+                print(text)
 
     def __send(self, targetname, text, type_):
         send_filter = SendType(self.__shortname)
         if targetname in self.__socket_pool:
             sock = self.__socket_pool[targetname]
-            msg = send_filter.__Default(type_, text)
+            msg = send_filter.send_(type_, text)
+            self.__echo(msg)
             msg = base64.b64encode(msg.encode())
             sock.sendall(msg)
             return True
