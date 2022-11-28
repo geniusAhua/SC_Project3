@@ -71,7 +71,7 @@ class Command():
     OPEN_NET = 'open-net'
     HELP = 'help'
     SHOW_MSG = 'show-msg'
-    SHUT_SHOW_MSG = 'shut show-msg'
+    SHUT_SHOW_MSG = 'shut-show-msg'
     SEND_TO = 'send'
     CONNECT = 'connect'
     SEARCH_CONN = 'search-conn'
@@ -87,10 +87,6 @@ class Command():
     @staticmethod
     def send_failed(target_name, text):
         print(f'There has something wrong to send to {target_name} - {text}')
-
-    @staticmethod
-    def connect_success(target_name):
-        print(f'You have connect to {target_name} successfully.')
     
     @staticmethod
     def connect_failed(target_name):
@@ -282,11 +278,12 @@ class Demo():
                     if self.__addConnection(target_name, socket_) == True:
                         isLoop = True
                         self.__isWAN_occupied = True
+                        socket_.settimeout(None)
+                        print(f"You have successfully connected to {target_name}")
                         t = threading.Thread(target = self.__receive, args = (socket_, sendername, isDie))
                         t.setDaemon(True)
                         t.start()
                     else:
-                        print(f"There is no device named {target_name}")
                         isLoop = False
                         self.__isWAN_occupied = False
                 else:
@@ -302,13 +299,15 @@ class Demo():
             while isLoop:
                 time.sleep(3)
                 if(isDie[0] == True):
-                    self.__echo('Connection terminate: source: ' + self.__shortname + ' --- %s:%s' %self.__host + ' --- destination: %s:%s' %src_addr)
+                    self.__echo('Connection terminate: source: ' + self.__shortname + ' --- %s:%s' %src_addr + ' --- destination: %s:%s' %target)
                     break
             return
         except socket.timeout:
             print("connection timed out.")
+            socket_.close()
         except ConnectionRefusedError:
             print(f'Failed to connect to {target_name}')
+            socket_.close()
         finally:
             print("WAN slot has been released.")
             self.__isWAN_occupied = False
@@ -393,6 +392,10 @@ class Demo():
             return
 
         except BrokenPipeError:
+            isDie[0] = True
+            return
+        finally:
+            print(f'{sock} has something wrong -- {sendername}')
             isDie[0] = True
             return
     
@@ -495,9 +498,7 @@ class Demo():
                             print(f'f"The expression is wrong. please check it. {command[0]} -name')
                         else:
                             target_name = commandline.split(' ')[1]
-                            if self.__connect_to(target_name) == True:
-                                Command.connect_success(target_name)
-                            else:
+                            if self.__connect_to(target_name) != True:
                                 Command.connect_failed(target_name)
                         pass
                         
