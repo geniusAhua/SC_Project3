@@ -14,7 +14,6 @@ from prompt_toolkit.application import run_in_terminal
 from math import ceil
 
 Dictionary = {
-              'SHORTNAME': 'tiliu3', #send your device name
               'NO_USER': 'This connection is not found. Please check the route table.',
               'USER_EXISTED': 'User has existed on socket.',
               'BROADCAST': 'BROADCAST',
@@ -76,6 +75,7 @@ class SendType():
         return fun(param)
 
 class Command():
+    SET_NAME = 'set-name'
     OPEN_NET = 'open-net'
     HELP = 'help'
     SHOW_MSG = 'show-msg'
@@ -101,9 +101,10 @@ class Command():
         print(f'There has something wrong to connect to {target_name}.')
 
 class _Prompt():
-    __cli_header = f'ndn-cli:{Dictionary["SHORTNAME"]}'
+    __cli_header = f'ndn-cli:'
     @staticmethod
-    def begining():
+    def begining(name = ''):
+        _Prompt.__cli_header += str(name)
         return _Prompt.__cli_header + ' >'
     
     @staticmethod
@@ -115,7 +116,7 @@ class Demo():
     def __init__(self):
         self.__host = self.__get_host_ip()
         self.__host_broadcast = None
-        self.__shortname = Dictionary['SHORTNAME']
+        self.__shortname = None
         self.__group = Dictionary['GROUP']
         self.__port_LAN = 33000
         self.__port_WAN = 33001
@@ -538,45 +539,60 @@ class Demo():
         #Run echo loop.
         while isLoop:
             try:
+                if not self.__shortname:
+                    print("To use this application, please use 'set-name -name' to set the name of the application")
+
                 commandline = await session.prompt_async(prompt, key_bindings = kb)
                 if commandline != None and commandline != '':
                     command = commandline.split(" ")
 
-                    if command[0] == Command.OPEN_NET:
-                        self.__listen_host()
-                        prompt = _Prompt.running_bind
-
-                    elif command[0] == Command.SHOW_MSG:
-                        self.__do_showMsg()
-                    
-                    elif command[0] == Command.SHUT_SHOW_MSG:
-                        self.__do_shut_showMsg()
-
-                    elif command[0] == Command.SEARCH_CONN:
-                        self.__search_conn()
-
-                    elif command[0] == Command.SEND_TO:
-                        if len(command) != 3:
-                            print(f"The expression is wrong. please check it. {command[0]} -name -text")
-                        else:
-                            target_name = commandline.split(" ")[1]
-                            text = commandline.split(" ")[2]
-                            if self.__send(target_name, text, SendType.CHAT) == True:
-                                Command.send_success(target_name, text)
+                    if not self.__shortname:
+                        if command[0] == Command.SET_NAME:
+                            if len(command) != 2:
+                                print(f"The expression is wrong. Please check it. {command[0]} -name")
                             else:
-                                Command.send_failed(target_name, text)
-
-                    elif command[0] == Command.CONNECT:
-                        if len(command) != 2:
-                            print(f'f"The expression is wrong. please check it. {command[0]} -name')
+                                self.__shortname = command[1]
+                                prompt = _Prompt.begining(self.__shortname)
                         else:
-                            target_name = commandline.split(' ')[1]
-                            if self.__connect_to(target_name) != True:
-                                Command.connect_failed(target_name)
-                        pass
+                            print("Please set your name first!")
+                    
+                    else:
+
+                        if command[0] == Command.OPEN_NET:
+                            self.__listen_host()
+                            prompt = _Prompt.running_bind
+
+                        elif command[0] == Command.SHOW_MSG:
+                            self.__do_showMsg()
                         
-                    elif command != None:
-                        Command.not_found(command)
+                        elif command[0] == Command.SHUT_SHOW_MSG:
+                            self.__do_shut_showMsg()
+
+                        elif command[0] == Command.SEARCH_CONN:
+                            self.__search_conn()
+
+                        elif command[0] == Command.SEND_TO:
+                            if len(command) != 3:
+                                print(f"The expression is wrong. please check it. {command[0]} -name -text")
+                            else:
+                                target_name = commandline.split(" ")[1]
+                                text = commandline.split(" ")[2]
+                                if self.__send(target_name, text, SendType.CHAT) == True:
+                                    Command.send_success(target_name, text)
+                                else:
+                                    Command.send_failed(target_name, text)
+
+                        elif command[0] == Command.CONNECT:
+                            if len(command) != 2:
+                                print(f'f"The expression is wrong. please check it. {command[0]} -name')
+                            else:
+                                target_name = commandline.split(' ')[1]
+                                if self.__connect_to(target_name) != True:
+                                    Command.connect_failed(target_name)
+                            pass
+                            
+                        elif command != None:
+                            Command.not_found(command)
 
             except (EOFError, KeyboardInterrupt):
                 return
