@@ -364,14 +364,13 @@ class Demo():
                 text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
                 self.__echo(text)
 
-    def __send(self, targetname, text, type):
+    def __send(self, targetname, text, type_):
         send_filter = SendType(self.__shortname)
         if targetname in self.__socket_pool:
             sock = self.__socket_pool[targetname]
-            # TODO:
-
-            text = base64.b64encode(text.encode())
-            sock.sendall(text)
+            msg = send_filter.__Default(type_, text)
+            msg = base64.b64encode(msg.encode())
+            sock.sendall(msg)
             return True
         else:
             print(Dictionary['NO_USER'])
@@ -484,7 +483,7 @@ class Demo():
                         else:
                             target_name = commandline.split(" ")[1]
                             text = commandline.split(" ")[2]
-                            if self.__send(target_name, text) == True:
+                            if self.__send(target_name, text, SendType.CHAT) == True:
                                 Command.send_success(target_name, text)
                             else:
                                 Command.send_failed(target_name, text)
