@@ -313,6 +313,8 @@ class Demo():
             self.__isWAN_occupied = False
             if isDie[0]:
                 self.__deleteConnection(target_name)
+            else:
+                socket_.close()
 
     def __LAN_slot(self, sock, addr, src_addr):
         with self.__Sem_conns:
@@ -347,20 +349,22 @@ class Demo():
                 while isLoop:
                     time.sleep(3)
                     if(isDie[0] == True):
-                        self.__echo('Connection terminate: source: ' + sendername + ' --- %s:%s' %addr + ' --- destination: %s:%s' %src_addr)
+                        self.__echo('Connection terminate: source: ' + sendername + ' --- destination: ' + self.__)
                         break
                 return
             except ConnectionResetError:
                 self.__echo('A peer client suddenly disconnected')
                 return
             finally:
-                print(f'isDie: {isDie[0]}')
+                #this token means whether the socket is added into socket pool.
                 if isDie[0] == True:
                     self.__deleteConnection(sendername)
                     text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
                     text += f'        connection: {sendername} closed\n'
                     text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
                     print(text)
+                else:
+                    sock.close()
 
     def __send(self, targetname, text, type_):
         send_filter = SendType(self.__shortname)
