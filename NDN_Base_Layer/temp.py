@@ -211,14 +211,6 @@ class Demo():
                 self.__echo_bc('IP has been broadcasted.')
             else:
                 self.__echo_bc('There is no socket for socket.')
-            # broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            # broad.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            # broad.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-            # broad.settimeout(0.5)
-            # message = base64.b64encode(f'IP:{self.__host}/SHORTNAME:{self.__shortname}'.encode())
-            # broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
-            # self.__echo_bc('IP has been broadcasted.')
-            # broad.close()
         except Exception as e:
             self.__echo_bc(e)
 
@@ -294,6 +286,7 @@ class Demo():
                         t.setDaemon(True)
                         t.start()
                     else:
+                        print(f"There is no device named {target_name}")
                         isLoop = False
                         self.__isWAN_occupied = False
                 else:
@@ -317,6 +310,7 @@ class Demo():
         except ConnectionRefusedError:
             print(f'Failed to connect to {target_name}')
         finally:
+            print("WAN slot has been released.")
             self.__isWAN_occupied = False
             self.__deleteConnection(target_name)
 
@@ -436,6 +430,7 @@ class Demo():
             t.start()
             return True
         else:
+            print("You have already connected to another device. No more slot are available")
             return False
 
     def __do_showMsg(self):
