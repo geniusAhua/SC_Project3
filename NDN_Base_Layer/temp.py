@@ -383,7 +383,7 @@ class Demo():
                     sock.close()
 
     def __send(self, targetname, text, type_):
-        send_filter = SendType(self.__shortname, self.__targetname)
+        send_filter = SendType(self.__shortname, targetname)
         if targetname in self.__socket_pool:
             sock = self.__socket_pool[targetname]
             pack = send_filter.send_(type_, text)
