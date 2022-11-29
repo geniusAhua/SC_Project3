@@ -390,7 +390,8 @@ class Demo():
             print("WAN slot is released now.")
             self.__isWAN_occupied = False
             if isDie[0]:
-                self.__FIB.delete_nexthop_fib(target_name)
+                with self.__Sem_FIB_change:
+                    self.__FIB.delete_nexthop_fib(target_name)
                 self.__deleteConnection(target_name)
             else:
                 socket_.close()
@@ -439,7 +440,8 @@ class Demo():
                 #this token means whether the socket is added into socket pool.
                 if isDie[0] == True:
                     self.__deleteConnection(sendername)
-                    self.__FIB.delete_nexthop_fib(sendername)
+                    with self.__Sem_FIB_change:
+                        self.__FIB.delete_nexthop_fib(sendername)
                     text = '++++++++++++++++++++++++++++++++++++++++++++++++++\n'
                     text += f'        connection: {sendername} closed\n'
                     text += '++++++++++++++++++++++++++++++++++++++++++++++++++'
