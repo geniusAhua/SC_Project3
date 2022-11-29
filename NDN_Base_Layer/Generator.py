@@ -9,8 +9,10 @@ import os
 
 class Generator:
 
-    def __init__(self):
+    def __init__(self, shortname, type_):
         self.__isLoop = True
+        self.__shortname = shortname
+        self.__type_ = type_
 
     class Sensors:
         class SpeedSensor:
@@ -191,22 +193,24 @@ class Generator:
                 file_path = './sensor_data/' + device_name + '/'
                 file_name = i + '.csv'
                 with open(file_path + file_name) as csvfile:
+                    """
+                    device_name, device_type, data, time = p1,car,19_km_per_h,202211290238
+                    """
                     return csvfile.readlines()[-1]
 
     # print(read_from_csv('speed'))
 
     def __task(self):
-        self.execute_write_per_minute("speed", "p1", "car")
-        self.execute_write_per_minute("speed", "p2", "truck")
-        self.execute_write_per_minute("temperature", "p1", "bike")
-        self.execute_write_per_minute("temperature", "p2", "car")
+        self.execute_write_per_minute("speed", self.__shortname, self.__type_)
+        self.execute_write_per_minute("temperature", self.__shortname, self.__type_)
 
-        while self.__isLoop:
-            schedule.run_pending()
-            time.sleep(1)
+        while True:
+            if self.__isLoop:
+                schedule.run_pending()
+                time.sleep(1)
 
     def close(self):
-        self.__isLoop = False
+        self.__isLoop = not self.__isLoop
 
     def run(self):
         try:

@@ -12,6 +12,8 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import get_app
 from prompt_toolkit.application import run_in_terminal
 from math import ceil
+
+from Generator import Generator
 from CS import CS
 
 from FIB import FIB
@@ -133,6 +135,7 @@ class Command():
     SHOWCS = 'show-cs'
     SHOWPIT = 'show-pit'
     SHOWFIB = 'show-fib'
+    SET_GENERATOR = 'set-generator'
 
     @staticmethod
     def not_found(input):
@@ -187,6 +190,7 @@ class Demo():
         self.__CS = CS()
         self.__PIT = PIT()
         self.__FIB = FIB()
+        self.__Generator = None
 
     def __get_host_ip(self):
         """
@@ -514,14 +518,17 @@ class Demo():
             pass
 
     def __recvINTEREST(self, param, sendername):
-        #TODO
+        #param = targetname/sensor_type/time
         dataname = param
         targetname = param.split('/')[0]
         if targetname == self.__shortname:
-            data_path = param.split('/')[:-1]
+            #targetname/sensor_type/time
+            data_path = param
             #TODO
-            data = self.__getData(data_path)
-            pass
+            data = self.__getSensorData(data_path)
+            msg = f'{param}:{data}'
+            self.__send(sendername, msg, SendType.DATA)
+            
         elif self.__CS.isExist(dataname):
             with self.__Sem_CS_change:
                 data = self.__CS.find_item(dataname)
@@ -536,19 +543,16 @@ class Demo():
                     self.__PIT.add_pit_item(dataname, sendername, targetname)
                 with self.__Sem_FIB_change:
                     next_hop_name = self.__FIB.select_nexthop(targetname)
-                if next_hop_name[0] != 1:
+                if next_hop_name[0] != -1:
                     self.__send(next_hop_name, dataname, SendType.INTEREST)
                 else:
                     with self.__Sem_FIB_change:
                         broadcast_list = self.__FIB.broadcast_list()
-                    # #if the node is a leaf
-                    # if len(broadcast_list) == 1:
-                    #     msg = f'404/{dataname}'
-                    #     self.__send(sendername, msg, SendType.DATA)
-                    # else:#else it will broadcast the interest
                     for next_ in broadcast_list:
                         if next_ != sendername:
                             self.__send(next_, dataname, SendType.INTEREST)
+                        else:
+                            self.__PIT.delete_pit_item(dataname)
             
 
     def __recvDATA(self, param, sendername):
@@ -560,14 +564,41 @@ class Demo():
             with self.__Sem_PIT_change:
                 outfaces = self.__PIT.find_item(dataname)
             for out in outfaces:
-                self.__send(out[0], param, SendType.DATA)
+                if out[0] == self.__shortname:
+                    if data == "None":
+                        print("Data not found.")
+                    else:
+                        data = data.replace(';', ':', 1)
+                        data = data.replace('_', ' ', 1)
+                        print(f'{old_targetname}:{data}')
+                else:
+                    self.__send(out[0], param, SendType.DATA)
+
             with self.__Sem_CS_change:
                 self.__CS.add_cs_item(dataname, data)
             with self.__Sem_FIB_change:
                 self.__FIB.update_fib(sendername, old_targetname)
 
     def __getSensorData(self, data_path):
-        #TODO
+        #data_path = target_name/sensor_type/time
+        if self.__Generator != None:
+            target_name = data_path.split('/')[0]
+            sensor_type = data_path.split('/')[1]
+            """
+            device_name, device_type, data, time = p1,car,19_km_per_h,202211290238
+            """
+            data_plain = self.__Generator.read_from_csv(target_name, sensor_type)
+            device_type = data_plain.split(',')[1]
+            data = data_plain.split(',')[2]
+            time_ = data_plain.split(',')[3]
+            year = time_[:4]
+            month = time_[4:6]
+            day = time_[6:8]
+            hour = time_[8:10]
+            minute = time_[10:12]
+            return f'{year}-{month}-{day}_{hour};{minute}"{device_type}-{data}"'
+        else:
+            return 'None'
         pass
     
     def __maintain_listen(self, socket_, src_addr):
@@ -635,6 +666,11 @@ class Demo():
         async def _(event):
             self.__isShow_recv = not self.__isShow_recv
 
+        @kb.add('c-g')#switch of generator
+        async def _(event):
+            if self.__Generator != None:
+                self.__Generator.close()
+
         #welcom text
         welcom_text = "Welcom to use ndn cli.\nYou can press 'escape' or 'Control + c' to quit.\n"
         print(welcom_text)
@@ -698,22 +734,22 @@ class Demo():
                         
                         elif command[0] == Command.APPLY:
                             if self.__isRun_net:
-                                if len(command) == 4 or len(command) == 5:
+                                if len(command) == 3 or len(command) == 4:
                                     #TODO
                                     target_name = command[1]
-                                    sensor_from = command[2]
                                     sensor_name = command[3]
-                                    if SensorType.platform_isExist(sensor_from) and SensorType.sensor_isExist(sensor_name):
+                                    if SensorType.sensor_isExist(sensor_name):
                                         time_ = time.strftime("%Y%m%d%H%M", time.localtime())
-                                        if len(command) == 5:
+                                        if len(command) == 4:
                                             time_ = command[3]
-                                        msg = f'{target_name}/{sensor_from}/{sensor_name}/{time_}'
-                                        if self.__send(target_name, msg, SendType.INTEREST) == True:
-                                            print(f'You have applied {sensor_name} data from {target_name} at {time_}.')
-                                        else:
-                                            print(f'There are something wrong to send interest package.')
+                                        msg = f'{target_name}/{sensor_name}/{time_}'
+                                        self.__recvINTEREST(msg, self.__shortname)
+                                        # if self.__send(target_name, msg, SendType.INTEREST) == True:
+                                        #     print(f'You have applied {sensor_name} data from {target_name} at {time_}.')
+                                        # else:
+                                        #     print(f'There are something wrong to send interest package.')
                                     else:
-                                        print(f'There are no sensor: <{sensor_name}> from <{sensor_from}>.')
+                                        print(f'There are no sensor: <{sensor_name}>.')
                                 else:
                                     print(f'The expression is wrong. Please check it. {command[0]} -pi_name -sensor_from -sensor_type -time')
                             else:
@@ -736,6 +772,17 @@ class Demo():
                             if len(fib_) == 0:
                                 print("There is no item in Forward Informant Base.")
                             else: print(fib_)
+
+                        elif command[0] == Command.SET_GENERATOR:
+                            if self.__Generator != None:
+                                if len(command) != 2:
+                                    print(f'The expression is wrong. please check it. {command[0]} -generator_type')
+                                else:
+                                    gen_type = command[1]
+                                    self.__Generator = Generator(self.__shortname, gen_type)
+                                    self.__Generator.run()
+                            else:
+                                print("Generator has already run.")
 
                         elif command != None:
                             Command.not_found(command)

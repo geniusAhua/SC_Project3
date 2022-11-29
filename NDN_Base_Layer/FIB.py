@@ -14,7 +14,7 @@ class FIB:
         if targetname in self.__fib:
             item = self.__fib[targetname]
             return [item[0]]
-        else: return [1]
+        else: return [-1]
 
     def update_fib(self, pre_name, targetname):
         if pre_name in self.__fib[targetname]:
