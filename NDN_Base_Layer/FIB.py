@@ -17,6 +17,8 @@ class FIB:
         if targetname in self.__fib:
             if pre_name not in self.__fib[targetname]:
                 self.__fib[targetname] += [targetname]
+        else:
+            self.__fib[targetname] = [pre_name]
 
     def add_nexthop_fib(self, next_hop_name):
         self.__fib[next_hop_name] = []

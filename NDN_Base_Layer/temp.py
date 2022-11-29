@@ -475,7 +475,7 @@ class Demo():
                 if not data:
                     isDie[0] = True
                     break
-                self.__echo_recv("previous node: " + sendername + ', data: ' + data)
+                self.__echo_recv("previous node: " + sendername + ', package: ' + data)
                 type_ = data.split('//')[0].split(':')[0]
                 if type_ == SendType.CHAT:
                     header, param = data.split('//')
