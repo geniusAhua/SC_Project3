@@ -43,6 +43,7 @@ class Command():
     SHOWPIT = 'show-pit' #show-pit Show Pending Interest Table
     SHOWFIB = 'show-fib' #show-fib Show Forward Information Base
     SET_GENERATOR = 'set-generator' #set-generator -sensor_platform(car, bike, truck only)
+    SHOW_POOL = 'show-pool'
 
     @staticmethod
     def not_found(input):
@@ -771,6 +772,11 @@ class Demo():
                             if len(fib_) == 0:
                                 print("There is no item in Forward Informant Base.")
                             else: print(fib_)
+
+                        elif command[0] == Command.SHOW_POOL:
+                            print("~~~~~~~~~~~~~~~~~~~~~~~~debug only~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                            print(self.__socket_pool)
+                            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
                         elif command[0] == Command.SET_GENERATOR:
                             if self.__Generator == None:
