@@ -537,7 +537,7 @@ class Demo():
             msg = f'{dataname}:{data}'
             
             if sendername == self.__shortname:
-                print(f'{msg}')
+                self.__echo(f'{msg}')
             
             self.__send(sendername, msg, SendType.DATA)
         else:
@@ -554,7 +554,7 @@ class Demo():
                 else:
                     with self.__Sem_FIB_change:
                         broadcast_list = self.__FIB.broadcast_list()
-                    self.__echo(broadcast_list)
+                    # self.__echo(broadcast_list)
                     for next_ in broadcast_list:
                         if next_ != sendername:
                             self.__send(next_, dataname, SendType.INTEREST)
