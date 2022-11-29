@@ -572,7 +572,7 @@ class Demo():
                         print("Data not found.")
                     else:
                         data = data.replace(';', ':', 1)
-                        data = data.replace('_', ' ', 1)
+                        data = data.replace('_', ' ')
                         print(f'{old_targetname}:{data}')
                 else:
                     self.__send(out[0], param, SendType.DATA)
@@ -601,7 +601,7 @@ class Demo():
             day = time_[6:8]
             hour = time_[8:10]
             minute = time_[10:12]
-            return f'{year}-{month}-{day}_{hour};{minute}"{device_type}-{data}"'
+            return f'{year}-{month}-{day}_{hour};{minute}_"{device_type}-{data}"'
         else:
             return 'None'
     
