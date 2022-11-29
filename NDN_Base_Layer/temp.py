@@ -10,6 +10,7 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.shortcuts import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.application import get_app
 from prompt_toolkit.application import run_in_terminal
 from math import ceil
@@ -687,9 +688,6 @@ class Demo():
         #welcom text
         welcom_text = "Welcom to use ndn cli.\nYou can press 'escape' or 'Control + c' to quit.\n"
         print(welcom_text)
-        #Create Prompt
-        session = PromptSession()
-        prompt = _Prompt.begining
         #set history
         history = InMemoryHistory()
         history.append_string("set-name")
@@ -699,13 +697,17 @@ class Demo():
         history.append_string("show-msg")
         history.append_string("shut-show-msg")
         history.append_string("apply")
+        #Create Prompt
+        session = PromptSession(history=history, enable_history_search=True, auto_suggest=AutoSuggestFromHistory)
+        prompt = _Prompt.begining
+        
         #Run echo loop.
         while isLoop:
             try:
                 if not self.__shortname:
                     print("To use this application, please use 'set-name -name' to set the name of the application")
 
-                commandline = await session.prompt_async(prompt, key_bindings = kb, history = history)
+                commandline = await session.prompt_async(prompt, key_bindings = kb)
                 if commandline != None and commandline != '':
                     command = commandline.split(" ")
 
