@@ -544,7 +544,8 @@ class Demo():
                 with self.__Sem_FIB_change:
                     next_hop_name = self.__FIB.select_nexthop(targetname)
                 if next_hop_name[0] != -1:
-                    self.__send(next_hop_name, dataname, SendType.INTEREST)
+                    self.__echo("next hop:" + next_hop_name[0])
+                    self.__send(next_hop_name[0], dataname, SendType.INTEREST)
                 else:
                     with self.__Sem_FIB_change:
                         broadcast_list = self.__FIB.broadcast_list()

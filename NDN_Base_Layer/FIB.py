@@ -29,6 +29,8 @@ class FIB:
             for next in v:
                 if(next_hop_name == next):
                     v.remove(next)
+                    if len(v) == 0:
+                        del self.__fib[k]
 
     def broadcast_list(self):
         broadcast_list = []
