@@ -187,22 +187,32 @@ class Generator:
         schedule.every().minute.do(self.write_to_csv, device_name, device_type, sensor_type)
 
     def read_from_csv(self, device_name, sensor_type):
-        sensor_types = ['speed', 'proximity', 'pressure', 'light', 'wiper', 'passenger', 'fuel', 'temperature']
-        for i in sensor_types:
-            if sensor_type == i:
-                file_path = './sensor_data/' + device_name + '/'
-                file_name = i + '.csv'
-                with open(file_path + file_name) as csvfile:
-                    """
-                    device_name, device_type, data, time = p1,car,19_km_per_h,202211290238
-                    """
-                    return csvfile.readlines()[-1]
+        try:
+            sensor_types = ['speed', 'proximity', 'pressure', 'light', 'wiper', 'passenger', 'fuel', 'temperature']
+            for i in sensor_types:
+                if sensor_type == i:
+                    file_path = './sensor_data/' + device_name + '/'
+                    file_name = i + '.csv'
+                    with open(file_path + file_name) as csvfile:
+                        """
+                        device_name, device_type, data, time = p1,car,19_km_per_h,202211290238
+                        """
+                        return csvfile.readlines()[-1]
+
+        except Exception as e:
+            return None
 
     # print(read_from_csv('speed'))
 
     def __task(self):
         self.execute_write_per_minute("speed", self.__shortname, self.__type_)
         self.execute_write_per_minute("temperature", self.__shortname, self.__type_)
+        self.execute_write_per_minute("proximity", self.__shortname, self.__type_)
+        self.execute_write_per_minute("light", self.__shortname, self.__type_)
+        self.execute_write_per_minute("pressure", self.__shortname, self.__type_)
+        self.execute_write_per_minute("wiper", self.__shortname, self.__type_)
+        self.execute_write_per_minute("passenger", self.__shortname, self.__type_)
+        self.execute_write_per_minute("fuel", self.__shortname, self.__type_)
 
         while True:
             if self.__isLoop:

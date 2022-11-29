@@ -546,7 +546,6 @@ class Demo():
                 with self.__Sem_FIB_change:
                     next_hop_name = self.__FIB.select_nexthop(targetname)
                 if next_hop_name[0] != -1:
-                    self.__echo("next hop:" + next_hop_name[0])
                     self.__send(next_hop_name[0], dataname, SendType.INTEREST)
                 else:
                     with self.__Sem_FIB_change:
@@ -592,6 +591,8 @@ class Demo():
             device_name, device_type, data, time = p1,car,19_km_per_h,202211290238
             """
             data_plain = self.__Generator.read_from_csv(target_name, sensor_type)
+            if data_plain is None:
+                return 'None'
             device_type = data_plain.split(',')[1]
             data = data_plain.split(',')[2]
             time_ = data_plain.split(',')[3]
@@ -603,7 +604,6 @@ class Demo():
             return f'{year}-{month}-{day}_{hour};{minute}"{device_type}-{data}"'
         else:
             return 'None'
-        pass
     
     def __maintain_listen(self, socket_, src_addr):
         while True:
