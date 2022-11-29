@@ -168,7 +168,7 @@ class Demo():
 
     def __init__(self):
         self.__host = self.__get_host_ip()
-        self.__host_broadcast = None
+        self.__host_broadcast = '255.255.255.255'
         self.__shortname = None
         self.__group = Dictionary['GROUP']
         self.__port_LAN = 33000
@@ -254,7 +254,6 @@ class Demo():
             host_broadcast = self.__host[::-1]
             host_broadcast = host_broadcast.replace(host_broadcast.split('.')[0], '552', 1)[::-1]
             # self.__host_broadcast = host_broadcast
-            self.__host_broadcast = '255.255.255.255'
             broad.bind(("", self.__port_BROADCAST))
             self.__echo_bc(f'broadcast_ip: {host_broadcast}')
             isDie = [False]
