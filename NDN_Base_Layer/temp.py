@@ -535,6 +535,10 @@ class Demo():
             with self.__Sem_CS_change:
                 data = self.__CS.find_item(dataname)
             msg = f'{dataname}:{data}'
+            
+            if sendername == self.__shortname:
+                print(f'{msg}')
+            
             self.__send(sendername, msg, SendType.DATA)
         else:
             if self.__PIT.isExist(dataname):

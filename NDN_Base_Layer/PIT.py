@@ -5,7 +5,9 @@ class PIT():
     def add_pit_item(self, dataname, outface, targetname):
         if dataname not in self.__pit:
             self.__pit[dataname] = []
-        self.__pit[dataname].append([outface, targetname])
+        else:
+            if [outface, targetname] not in self.__pit[dataname]:
+                self.__pit[dataname].append([outface, targetname])
 
     def find_item(self, dataname):
         if dataname in self.__pit:
