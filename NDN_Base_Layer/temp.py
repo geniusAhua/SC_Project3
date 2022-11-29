@@ -572,6 +572,7 @@ class Demo():
                         print("Data not found.")
                     else:
                         data = data.replace(';', ':', 1)
+                        data = data.replace('_per_', '/')
                         data = data.replace('_', ' ')
                         print(f'{old_targetname}:{data}')
                 else:
@@ -601,7 +602,7 @@ class Demo():
             day = time_[6:8]
             hour = time_[8:10]
             minute = time_[10:12]
-            return f'{year}-{month}-{day}_{hour};{minute}_"{device_type}-{data}"'
+            return f'{year}-{month}-{day}_{hour};{minute}_<{device_type}-{data}>'
         else:
             return 'None'
     
@@ -619,7 +620,7 @@ class Demo():
     def __listen_host(self):
         if not self.__isRun_net:
             socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            print("IP address of current device: " + self.__host)
+            print("name of current device: " + self.__shortname)
             src_addr = (self.__host, self.__port_LAN)
             socket_.bind(src_addr)
             #set the num of wating connection application

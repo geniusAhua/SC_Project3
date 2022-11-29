@@ -2,10 +2,7 @@ import ast
 
 class FIB:
     def __init__(self):
-        self.__fib = {}  # {'content_name': [[outface, cost, time], ...]}
-        # self.__fib_entry = []
-        # self.__fib_status_now = True
-        # self.__fib_status_pre = True
+        self.__fib = {}  # {'target_name': [next_hop, ...]}
 
     def get_fib(self):
         return self.__fib
@@ -17,8 +14,9 @@ class FIB:
         else: return [-1]
 
     def update_fib(self, pre_name, targetname):
-        if pre_name in self.__fib[targetname]:
-            self.__fib[targetname] += [targetname]
+        if targetname in self.__fib:
+            if pre_name not in self.__fib[targetname]:
+                self.__fib[targetname] += [targetname]
 
     def add_nexthop_fib(self, next_hop_name):
         self.__fib[next_hop_name] = []
@@ -29,8 +27,9 @@ class FIB:
             for next in v:
                 if(next_hop_name == next):
                     v.remove(next)
-                    if len(v) == 0:
-                        del self.__fib[k]
+        for k in list(self.__fib.keys()):
+            if len(self.__fib[k]) == 0:
+                del self.__fib[k]
 
     def broadcast_list(self):
         broadcast_list = []
