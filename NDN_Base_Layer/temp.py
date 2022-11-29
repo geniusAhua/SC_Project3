@@ -172,9 +172,9 @@ class Demo():
         self.__host_broadcast = '255.255.255.255'
         self.__shortname = None
         self.__group = Dictionary['GROUP']
-        self.__port_LAN = 33000
-        self.__port_WAN = 33001
-        self.__port_BROADCAST = 33002
+        self.__port_LAN = 33790
+        self.__port_WAN = 33791
+        self.__port_BROADCAST = 33792
         self.__recv_size = 2048#1024/2048/3072
         self.__isWAN_occupied = False
         self.__Sem_conn_change = threading.Semaphore(1)
@@ -526,7 +526,7 @@ class Demo():
         if targetname == self.__shortname:
             #targetname/sensor_type/time
             data_path = param
-            #TODO
+
             data = self.__getSensorData(data_path)
             msg = f'{param}:{data}'
             self.__send(sendername, msg, SendType.DATA)
