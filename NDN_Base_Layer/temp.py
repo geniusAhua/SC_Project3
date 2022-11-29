@@ -285,7 +285,7 @@ class Demo():
                         broad.sendto(message, (self.__host_broadcast, self.__port_BROADCAST))
                         self.__echo_bc('IP has been broadcasted.')
                     else:
-                        self.__echo_bc('There is no socket for socket.')
+                        self.__echo_bc('There is no socket for broadcast.')
                     time.sleep(5)
         except Exception as e:
             self.__echo_bc(e)
