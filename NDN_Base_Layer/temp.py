@@ -9,6 +9,7 @@ import asyncio
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.shortcuts import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.application import get_app
 from prompt_toolkit.application import run_in_terminal
 from math import ceil
@@ -689,13 +690,22 @@ class Demo():
         #Create Prompt
         session = PromptSession()
         prompt = _Prompt.begining
+        #set history
+        history = InMemoryHistory()
+        history.append_string("set-name")
+        history.append_string('set-generator')
+        history.append_string('open-net')
+        history.append_string("connect")
+        history.append_string("show-msg")
+        history.append_string("shut-show-msg")
+        history.append_string("apply")
         #Run echo loop.
         while isLoop:
             try:
                 if not self.__shortname:
                     print("To use this application, please use 'set-name -name' to set the name of the application")
 
-                commandline = await session.prompt_async(prompt, key_bindings = kb)
+                commandline = await session.prompt_async(prompt, key_bindings = kb, history = history)
                 if commandline != None and commandline != '':
                     command = commandline.split(" ")
 
