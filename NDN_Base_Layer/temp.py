@@ -464,7 +464,7 @@ class Demo():
                 return False
             return True
         else:
-            print(Dictionary['NO_USER'])
+            print(Dictionary['NO_USER'] + "-- connection to: " + targetname)
             return False
 
     def __receive(self, sock, sendername, isDie):
