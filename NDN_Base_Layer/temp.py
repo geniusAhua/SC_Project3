@@ -773,7 +773,7 @@ class Demo():
                             else: print(fib_)
 
                         elif command[0] == Command.SET_GENERATOR:
-                            if self.__Generator != None:
+                            if self.__Generator == None:
                                 if len(command) != 2:
                                     print(f'The expression is wrong. please check it. {command[0]} -generator_type')
                                 else:
