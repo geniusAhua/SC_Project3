@@ -698,7 +698,7 @@ class Demo():
         history.append_string("shut-show-msg")
         history.append_string("apply")
         #Create Prompt
-        session = PromptSession(history=history, enable_history_search=True, auto_suggest=AutoSuggestFromHistory)
+        session = PromptSession(history=history, enable_history_search=True)
         prompt = _Prompt.begining
         
         #Run echo loop.
@@ -707,7 +707,7 @@ class Demo():
                 if not self.__shortname:
                     print("To use this application, please use 'set-name -name' to set the name of the application")
 
-                commandline = await session.prompt_async(prompt, key_bindings = kb)
+                commandline = await session.prompt_async(prompt, key_bindings = kb, auto_suggest=AutoSuggestFromHistory())
                 if commandline != None and commandline != '':
                     command = commandline.split(" ")
 
@@ -815,8 +815,9 @@ class Demo():
 
                         elif command != None:
                             Command.not_found(command)
-
-            except (EOFError, KeyboardInterrupt):
+            except KeyboardInterrupt:
+                pass
+            except (EOFError):
                 return
 
     async def __main(self):
