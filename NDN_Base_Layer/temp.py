@@ -72,17 +72,54 @@ class SendType():
         return fun(param)
 
 class SensorType():
-    SPEED = 'SPEED'
-    LIGHT = 'LIGHT'
-    PROXIMITY = 'PROXIMITY'
-    PRESSURE = 'PRESSURE'
-    WIPER = 'WIPER'
-    PASSENGER = 'PASSENGER'
-    FUEL = 'FUEL'
-    TEMPERATURE = 'TEMPERATURE'
 
-    def __sensorSPEED(self, param):
-        pass
+    def platform_car(self):
+        return True
+
+    def platform_truck(self):
+        return True
+
+    def platform_bike(self):
+        return True
+
+    def sensor_speed(self):
+        return True
+
+    def sensor_light(self):
+        return True
+    
+    def sensor_proximity(self):
+        return True
+    
+    def sensor_pressure(self):
+        return True
+
+    def sensor_wiper(self):
+        return True
+
+    def sensor_passenger(self):
+        return True
+
+    def sensor_fuel(self):
+        return True
+
+    def sensor_temperature(self):
+        return True
+
+    def Default(self):
+        return False
+
+    @staticmethod
+    def sensor_isExist(param):
+        type_ = "sensor_" + param
+        fun = getattr(SensorType, type_, SensorType.Default)
+        return fun(SensorType)
+
+    @staticmethod
+    def platform_isExist(param):
+        type_ = "platform_" + param
+        fun = getattr(SensorType, type_, SensorType.Default)
+        return fun(SensorType)
 
 class Command():
     SET_NAME = 'set-name'
@@ -93,6 +130,9 @@ class Command():
     CONNECT = 'connect'
     SEARCH_CONN = 'search-conn'
     APPLY = 'apply'
+    SHOWCS = 'show-cs'
+    SHOWPIT = 'show-pit'
+    SHOWFIB = 'show-fib'
 
     @staticmethod
     def not_found(input):
@@ -142,7 +182,7 @@ class Demo():
         self.__socket_pool = {}
         self.__isShow_msg = True
         self.__isShow_recv = True
-        self.__isShow_bd = True
+        self.__isShow_bd = False
         self.__isRun_net = False
         self.__CS = CS()
         self.__PIT = PIT()
@@ -480,6 +520,7 @@ class Demo():
         if targetname == self.__shortname:
             data_path = param.split('/')[:-1]
             #TODO
+            data = self.__getData(data_path)
             pass
         elif self.__CS.isExist(dataname):
             with self.__Sem_CS_change:
@@ -524,6 +565,10 @@ class Demo():
                 self.__CS.add_cs_item(dataname, data)
             with self.__Sem_FIB_change:
                 self.__FIB.update_fib(sendername, old_targetname)
+
+    def __getSensorData(self, data_path):
+        #TODO
+        pass
     
     def __maintain_listen(self, socket_, src_addr):
         while True:
@@ -645,17 +690,53 @@ class Demo():
 
                         elif command[0] == Command.CONNECT:
                             if len(command) != 2:
-                                print(f'f"The expression is wrong. please check it. {command[0]} -name')
+                                print(f'The expression is wrong. please check it. {command[0]} -name')
                             else:
                                 target_name = commandline.split(' ')[1]
                                 if self.__connect_to(target_name) != True:
                                     Command.connect_failed(target_name)
                         
                         elif command[0] == Command.APPLY:
-                            if len(command) != 3:
-                                #TODO
-                                pass
-                            
+                            if self.__isRun_net:
+                                if len(command) == 4 or len(command) == 5:
+                                    #TODO
+                                    target_name = command[1]
+                                    sensor_from = command[2]
+                                    sensor_name = command[3]
+                                    if SensorType.platform_isExist(sensor_from) and SensorType.sensor_isExist(sensor_name):
+                                        time_ = time.strftime("%Y%m%d%H%M", time.localtime())
+                                        if len(command) == 5:
+                                            time_ = command[3]
+                                        msg = f'{target_name}/{sensor_from}/{sensor_name}/{time_}'
+                                        if self.__send(target_name, msg, SendType.INTEREST) == True:
+                                            print(f'You have applied {sensor_name} data from {target_name} at {time_}.')
+                                        else:
+                                            print(f'There are something wrong to send interest package.')
+                                    else:
+                                        print(f'There are no sensor: <{sensor_name}> from <{sensor_from}>.')
+                                else:
+                                    print(f'The expression is wrong. Please check it. {command[0]} -pi_name -sensor_from -sensor_type -time')
+                            else:
+                                print("The network is not available. Please open network first.")
+
+                        elif command[0] == Command.SHOWCS:
+                            cs_ = self.__CS.get_cs()
+                            if len(cs_) == 0:
+                                print("There is no item in Content Store.")
+                            else: print(cs_)
+
+                        elif command[0] == Command.SHOWPIT:
+                            pit_ = self.__PIT.get_pit()
+                            if len(pit_) == 0:
+                                print("There is no item in Pending Interest Table.")
+                            else: print(pit_)
+                        
+                        elif command[0] == Command.SHOWFIB:
+                            fib_ = self.__FIB.get_fib()
+                            if len(fib_) == 0:
+                                print("There is no item in Forward Informant Base.")
+                            else: print(fib_)
+
                         elif command != None:
                             Command.not_found(command)
 
