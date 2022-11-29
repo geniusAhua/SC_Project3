@@ -611,15 +611,18 @@ class Demo():
             return 'None'
     
     def __maintain_listen(self, socket_, src_addr):
-        while True:
-            try:
+        try:
+            while True:
                 sock_,addr_ = socket_.accept()
                 # self.__echo(f'new connection: {addr_}')
                 t = threading.Thread(target = self.__LAN_slot, args = (sock_,addr_,src_addr))
                 t.setDaemon(True)
                 t.start()
-            except:
-                print ("Error: Failed to create a new thread")
+        except:
+            print ("Error: Failed to create a new thread")
+
+        finally:
+            socket_.close()
     
     def __listen_host(self):
         if not self.__isRun_net:
