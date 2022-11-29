@@ -35,5 +35,5 @@ class FIB:
         broadcast_list = []
         for k, v in self.__fib.items():
             if k == v[0]:
-                broadcast_list.append(v)
+                broadcast_list.append(v[0])
         return broadcast_list
