@@ -566,28 +566,29 @@ class Demo():
 
     def __recvDATA(self, param, sendername):
         #TODO
-        dataname = param.split(':')[0]
-        old_targetname = dataname.split('/')[0]
-        data = param.split(':')[1]
-        if self.__PIT.isExist(dataname):
-            with self.__Sem_PIT_change:
-                outfaces = self.__PIT.find_item(dataname)
-            for out in outfaces:
-                if out[0] == self.__shortname:
-                    if data == "None":
-                        print("Data not found.")
+        with patch_stdout():
+            dataname = param.split(':')[0]
+            old_targetname = dataname.split('/')[0]
+            data = param.split(':')[1]
+            if self.__PIT.isExist(dataname):
+                with self.__Sem_PIT_change:
+                    outfaces = self.__PIT.find_item(dataname)
+                for out in outfaces:
+                    if out[0] == self.__shortname:
+                        if data == "None":
+                            print("Data not found.")
+                        else:
+                            data = data.replace(';', ':', 1)
+                            data = data.replace('_per_', '/')
+                            data = data.replace('_', ' ')
+                            print(f'{old_targetname}:{data}')
                     else:
-                        data = data.replace(';', ':', 1)
-                        data = data.replace('_per_', '/')
-                        data = data.replace('_', ' ')
-                        print(f'{old_targetname}:{data}')
-                else:
-                    self.__send(out[0], param, SendType.DATA)
+                        self.__send(out[0], param, SendType.DATA)
 
-            with self.__Sem_CS_change:
-                self.__CS.add_cs_item(dataname, data)
-            with self.__Sem_FIB_change:
-                self.__FIB.update_fib(sendername, old_targetname)
+                with self.__Sem_CS_change:
+                    self.__CS.add_cs_item(dataname, data)
+                with self.__Sem_FIB_change:
+                    self.__FIB.update_fib(sendername, old_targetname)
 
     def __getSensorData(self, data_path):
         #data_path = target_name/sensor_type/time
