@@ -30,6 +30,36 @@ IP_table = {
     
 }
 
+class Command():
+    SET_NAME = 'set-name' #set-name -name
+    OPEN_NET = 'open-net' #open-net
+    SHOW_MSG = 'show-msg' #show-msg this is for showing information about connection
+    SHUT_SHOW_MSG = 'shut-show-msg' #shut-show-msg
+    CHAT = 'chat' #this command cannot work now!
+    CONNECT = 'connect' #connect -next_device
+    SEARCH_CONN = 'search-conn' #search-conn To search available connection
+    APPLY = 'apply' #apply -targetname -sensor_type
+    SHOWCS = 'show-cs' #show-cs Show Content Store
+    SHOWPIT = 'show-pit' #show-pit Show Pending Interest Table
+    SHOWFIB = 'show-fib' #show-fib Show Forward Information Base
+    SET_GENERATOR = 'set-generator' #set-generator -sensor_platform(car, bike, truck only)
+
+    @staticmethod
+    def not_found(input):
+        print(f'Command "{input}" not found.')
+
+    @staticmethod
+    def chat_success(target_name, text):
+        print(f'You have sent to {target_name} - {text}')
+
+    @staticmethod
+    def chat_failed(target_name, text):
+        print(f'There has something wrong to send to {target_name} - {text}')
+    
+    @staticmethod
+    def connect_failed(target_name):
+        print(f'There has something wrong to connect to {target_name}.')
+
 class SendType():
     #The values of these variables must be as same as the end of private function
     CHAT = 'CHAT'
@@ -122,36 +152,6 @@ class SensorType():
         type_ = "platform_" + param
         fun = getattr(SensorType, type_, SensorType.Default)
         return fun(SensorType)
-
-class Command():
-    SET_NAME = 'set-name'
-    OPEN_NET = 'open-net'
-    SHOW_MSG = 'show-msg'
-    SHUT_SHOW_MSG = 'shut-show-msg'
-    CHAT = 'chat'
-    CONNECT = 'connect'
-    SEARCH_CONN = 'search-conn'
-    APPLY = 'apply'
-    SHOWCS = 'show-cs'
-    SHOWPIT = 'show-pit'
-    SHOWFIB = 'show-fib'
-    SET_GENERATOR = 'set-generator'
-
-    @staticmethod
-    def not_found(input):
-        print(f'Command "{input}" not found.')
-
-    @staticmethod
-    def chat_success(target_name, text):
-        print(f'You have sent to {target_name} - {text}')
-
-    @staticmethod
-    def chat_failed(target_name, text):
-        print(f'There has something wrong to send to {target_name} - {text}')
-    
-    @staticmethod
-    def connect_failed(target_name):
-        print(f'There has something wrong to connect to {target_name}.')
 
 class _Prompt():
     __cli_header = f'ndn-cli:'
@@ -736,7 +736,7 @@ class Demo():
                                 if len(command) == 3 or len(command) == 4:
                                     #TODO
                                     target_name = command[1]
-                                    sensor_name = command[3]
+                                    sensor_name = command[2]
                                     if SensorType.sensor_isExist(sensor_name):
                                         time_ = time.strftime("%Y%m%d%H%M", time.localtime())
                                         if len(command) == 4:
