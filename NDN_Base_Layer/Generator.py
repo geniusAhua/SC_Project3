@@ -186,7 +186,8 @@ class Generator:
     def execute_write_per_minute(self, sensor_type, device_name, device_type):
         schedule.every().minute.do(self.write_to_csv, device_name, device_type, sensor_type)
 
-    def read_from_csv(self, device_name, sensor_type):
+
+    def read_from_csv(device_name, sensor_type):
         try:
             sensor_types = ['speed', 'proximity', 'pressure', 'light', 'wiper', 'passenger', 'fuel', 'temperature']
             for i in sensor_types:

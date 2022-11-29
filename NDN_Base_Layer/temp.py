@@ -7,10 +7,11 @@ import sys
 import time
 import asyncio
 from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit.shortcuts import PromptSession
+from prompt_toolkit.shortcuts import PromptSession, CompleteStyle
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.application import get_app
 from prompt_toolkit.application import run_in_terminal
 from math import ceil
@@ -540,8 +541,8 @@ class Demo():
             
             if sendername == self.__shortname:
                 self.__echo(f'{msg}')
-            
-            self.__send(sendername, msg, SendType.DATA)
+            else:
+                self.__send(sendername, msg, SendType.DATA)
         else:
             if self.__PIT.isExist(dataname):
                 with self.__Sem_PIT_change:
@@ -560,7 +561,7 @@ class Demo():
                     for next_ in broadcast_list:
                         if next_ != sendername:
                             self.__send(next_, dataname, SendType.INTEREST)
-                        else:
+                        elif len(broadcast_list) == 0:
                             self.__PIT.delete_pit_item(dataname)
             
 
@@ -574,7 +575,9 @@ class Demo():
                 with self.__Sem_PIT_change:
                     outfaces = self.__PIT.find_item(dataname)
                 for out in outfaces:
-                    if out[0] == self.__shortname:
+                    back = out[0]
+                    # self.__echo('backto: ' + back)
+                    if back == self.__shortname:
                         if data == "None":
                             print("Data not found.")
                         else:
@@ -583,7 +586,7 @@ class Demo():
                             data = data.replace('_', ' ')
                             print(f'{old_targetname}:{data}')
                     else:
-                        self.__send(out[0], param, SendType.DATA)
+                        self.__send(back, param, SendType.DATA)
 
                 with self.__Sem_CS_change:
                     self.__CS.add_cs_item(dataname, data)
@@ -698,6 +701,24 @@ class Demo():
         history.append_string("show-msg")
         history.append_string("shut-show-msg")
         history.append_string("apply")
+        history.append_string("show-pit")
+        history.append_string("show-fib")
+        history.append_string("show-cs")
+
+        command_c = WordCompleter([
+            "set-name",
+            "set-generator",
+            "open-net",
+            "connect",
+            "show-msg",
+            "shut-show-msg",
+            "apply",
+            "show-pit",
+            "show-fib",
+            "show-cs",
+        ],
+        ignore_case=True,
+        )
         #Create Prompt
         session = PromptSession(history=history, enable_history_search=True)
         prompt = _Prompt.begining
@@ -708,7 +729,7 @@ class Demo():
                 if not self.__shortname:
                     print("To use this application, please use 'set-name -name' to set the name of the application")
 
-                commandline = await session.prompt_async(prompt, key_bindings = kb, auto_suggest=AutoSuggestFromHistory())
+                commandline = await session.prompt_async(prompt, key_bindings = kb, auto_suggest=AutoSuggestFromHistory(), completer=command_c, complete_style=CompleteStyle.READLINE_LIKE, complete_while_typing=True)
                 if commandline != None and commandline != '':
                     command = commandline.split(" ")
 
@@ -834,8 +855,8 @@ class Demo():
                 await self.__cli_input()
             finally:
                 #cancell background tasks
-                # bct.cancel()
-                pass
+                for k, v in self.__socket_pool.items():
+                    v.close()
             print("\nQuitting CLI. Bye.\n")
 
     def run(self):
