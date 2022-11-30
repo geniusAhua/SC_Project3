@@ -670,6 +670,7 @@ class Demo():
         isLoop = True
         kb = KeyBindings()
         @kb.add('escape')
+        @kb.add('c-c')
         async def _(event):
             nonlocal isLoop
             isLoop = False
@@ -728,7 +729,7 @@ class Demo():
                 if not self.__shortname:
                     print("To use this application, please use 'set-name -name' to set the name of the application")
 
-                commandline = await session.prompt_async(prompt, key_bindings = kb, auto_suggest=AutoSuggestFromHistory(), completer=command_c, complete_style=CompleteStyle.READLINE_LIKE, complete_while_typing=True)
+                commandline = await session.prompt_async(prompt, key_bindings = kb, auto_suggest=AutoSuggestFromHistory(), completer=command_c, complete_while_typing=True)
                 if commandline != None and commandline != '':
                     command = commandline.split(" ")
 
