@@ -176,8 +176,8 @@ class Demo():
         self.__shortname = None
         self.__group = Dictionary['GROUP']
         self.__port_LAN = 33790
-        self.__port_BROADCAST = 33792
-        self.__port_WAN = 33791#actually it is a range of 33791 ~ 33792
+        self.__port_BROADCAST = 33791
+        self.__port_WAN = 33792#actually it is a range of 33791 ~ 33792
         self.__recv_size = 2048#1024/2048/3072
         self.__WAN_num = 0
         self.__WAN_max = 3
