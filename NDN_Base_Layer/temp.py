@@ -176,12 +176,14 @@ class Demo():
         self.__shortname = None
         self.__group = Dictionary['GROUP']
         self.__port_LAN = 33790
-        self.__port_WAN = 33791
         self.__port_BROADCAST = 33792
+        self.__port_WAN = 33791#actually it is a range of 33791 ~ 33792
         self.__recv_size = 2048#1024/2048/3072
-        self.__isWAN_occupied = False
+        self.__WAN_num = 0
+        self.__WAN_max = 3
+        self.__Sem_WAN_num = threading.Semaphore(1)
         self.__Sem_conn_change = threading.Semaphore(1)
-        self.__Sem_conns = threading.Semaphore(3) # the maximum number of connections is 2/最大连接数量为2
+        self.__Sem_conns = threading.Semaphore(3) # the maximum number of connections is 3/最大连接数量为3
         self.__Sem_IPT_change = threading.Semaphore(1)
         self.__Sem_PIT_change = threading.Semaphore(1)
         self.__Sem_CS_change = threading.Semaphore(1)
@@ -335,7 +337,7 @@ class Demo():
 
     def __WAN_slot(self, target_name):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        src_addr = ("", self.__port_WAN)
+        src_addr = ("", self.__port_WAN + self.__WAN_num)
         #Use a specific port to connect
         socket_.bind(src_addr)
         socket_.settimeout(3)
@@ -359,23 +361,18 @@ class Demo():
                     #append the connection in socket pool
                     if self.__addConnection(target_name, socket_) == True:
                         isLoop = True
-                        self.__isWAN_occupied = True
+                        with self.__Sem_WAN_num:
+                            self.__WAN_num += 1
                         self.__FIB.add_nexthop_fib(target_name)
                         socket_.settimeout(None)
                         print(f"You have successfully connected to {target_name}")
                         t = threading.Thread(target = self.__receive, args = (socket_, sendername, isDie))
                         t.setDaemon(True)
                         t.start()
-                    else:
-                        isLoop = False
-                        self.__isWAN_occupied = False
+                    
                 else:
-                    isLoop = False
-                    self.__isWAN_occupied = False
                     self.__echo('The name of connection does not match, please check the IP_table!!!')
             else:
-                isLoop = False
-                self.__isWAN_occupied = False
                 print(f'Device: <{target_name}>, is illegal. It cannot be connected')
 
             while isLoop:
@@ -389,9 +386,9 @@ class Demo():
         except ConnectionRefusedError:
             print(f'Failed to connect to {target_name}')
         finally:
-            socket_.close()
             print("WAN slot is released now.")
-            self.__isWAN_occupied = False
+            with self.__Sem_WAN_num:
+                self.__WAN_num -= 1
             if isDie[0]:
                 with self.__Sem_FIB_change:
                     self.__FIB.delete_nexthop_fib(target_name)
@@ -399,7 +396,7 @@ class Demo():
             else:
                 socket_.close()
 
-    def __LAN_slot(self, sock, addr, src_addr):
+    def __LAN_slot(self, sock):
         with self.__Sem_conns:
             try:
                 # self.__echo('set connection: source address %s:%s' %addr + ' --- destination address %s:%s'  %src_addr )
@@ -616,12 +613,12 @@ class Demo():
         else:
             return 'None'
     
-    def __maintain_listen(self, socket_, src_addr):
+    def __maintain_listen(self, socket_):
         try:
             while True:
                 sock_,addr_ = socket_.accept()
                 # self.__echo(f'new connection: {addr_}')
-                t = threading.Thread(target = self.__LAN_slot, args = (sock_,addr_,src_addr))
+                t = threading.Thread(target = self.__LAN_slot, args = (sock_,))
                 t.setDaemon(True)
                 t.start()
         except:
@@ -643,7 +640,7 @@ class Demo():
             print('=======================end========================')
 
             # to maintain listening the host
-            maintain_listen = threading.Thread(target = self.__maintain_listen, args = (socket_, src_addr))
+            maintain_listen = threading.Thread(target = self.__maintain_listen, args = (socket_))
             maintain_listen.setDaemon(True)
             maintain_listen.start()
             self.__isRun_net = True
@@ -651,13 +648,13 @@ class Demo():
             print("You have already started the net.")
 
     def __connect_to(self, target_name):
-        if self.__isWAN_occupied == False:
+        if self.__WAN_num < self.__WAN_max:
             t = threading.Thread(target = self.__WAN_slot, args = (target_name,))
             t.setDaemon(True)
             t.start()
             return True
         else:
-            print("You have already connected to another device. No more slot are available")
+            print("No more WAN slot are available")
             return False
 
     def __do_showMsg(self):
@@ -740,14 +737,15 @@ class Demo():
                             else:
                                 self.__shortname = command[1]
                                 prompt = _Prompt.begining(self.__shortname)
+                                self.__listen_host()
+                                prompt = _Prompt.running_bind
                         else:
                             print("Please set your name first!")
                     
                     else:
 
                         if command[0] == Command.OPEN_NET:
-                            self.__listen_host()
-                            prompt = _Prompt.running_bind
+                            pass
 
                         elif command[0] == Command.SHOW_MSG:
                             self.__do_showMsg()
@@ -757,18 +755,6 @@ class Demo():
 
                         elif command[0] == Command.SEARCH_CONN:
                             self.__search_conn()
-
-                        # elif command[0] == Command.CHAT:
-                        #     if len(command) != 3:
-                        #         print(f"The expression is wrong. please check it. {command[0]} -name -text")
-                        #     else:
-                        #         target_name = commandline.split(" ")[1]
-                        #         text = commandline.split(" ")[2]
-                        #         if self.__send(target_name, text, SendType.CHAT) == True:
-                        #             Command.chat_success(target_name, text)
-                        #         else:
-                        #             Command.chat_failed(target_name, text)
-                        #         pass
 
                         elif command[0] == Command.CONNECT:
                             if len(command) != 2:
