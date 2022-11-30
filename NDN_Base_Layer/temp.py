@@ -585,6 +585,8 @@ class Demo():
                     else:
                         self.__send(back, param, SendType.DATA)
 
+                with self.__Sem_PIT_change:
+                    self.__PIT.delete_pit_item(dataname)
                 with self.__Sem_CS_change:
                     self.__CS.add_cs_item(dataname, data)
                 with self.__Sem_FIB_change:
