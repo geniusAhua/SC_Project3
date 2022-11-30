@@ -640,7 +640,7 @@ class Demo():
             print('=======================end========================')
 
             # to maintain listening the host
-            maintain_listen = threading.Thread(target = self.__maintain_listen, args = (socket_))
+            maintain_listen = threading.Thread(target = self.__maintain_listen, args = (socket_,))
             maintain_listen.setDaemon(True)
             maintain_listen.start()
             self.__isRun_net = True
