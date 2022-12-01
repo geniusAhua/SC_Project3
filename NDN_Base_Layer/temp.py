@@ -42,11 +42,11 @@ class Command():
     CONNECT = 'connect' #connect -next_device
     SEARCH_CONN = 'search-conn' #search-conn To search available connection
     APPLY = 'apply' #apply -targetname -sensor_type
-    SHOWCS = 'show-cs' #show-cs Show Content Store
-    SHOWPIT = 'show-pit' #show-pit Show Pending Interest Table
-    SHOWFIB = 'show-fib' #show-fib Show Forward Information Base
+    SHOWCS = 'show-cs' #debug: show-cs Show Content Store
+    SHOWPIT = 'show-pit' #debug: show-pit Show Pending Interest Table
+    SHOWFIB = 'show-fib' #debug: show-fib Show Forward Information Base
     SET_GENERATOR = 'set-generator' #set-generator -sensor_platform(car, bike, truck only)
-    SHOW_POOL = 'show-pool'
+    SHOW_POOL = 'show-pool' #debug: show socket pool
 
     @staticmethod
     def not_found(input):
