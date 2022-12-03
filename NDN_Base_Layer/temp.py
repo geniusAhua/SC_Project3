@@ -1,3 +1,6 @@
+'''
+This part was almost finished by @Tianhua Liu
+'''
 import base64
 import enum
 import os
@@ -32,7 +35,8 @@ Dictionary = {
 IP_table = {
     
 }
-
+'''control things'''
+#writen by @Tianhua Liu
 class Command():
     SET_NAME = 'set-name' #set-name -name
     OPEN_NET = 'open-net' #open-net
@@ -167,6 +171,7 @@ class _Prompt():
     @staticmethod
     def running_bind():
         return _Prompt.__cli_header + '-running >'
+'''control things'''
 
 class Demo():
 
@@ -212,6 +217,8 @@ class Demo():
 
         return ip
     
+    '''socket pool >>>'''
+    #writen by @Liangyu Chen
     def __addConnection(self, shortname, sock):
         if shortname not in self.__socket_pool:
             with self.__Sem_conn_change:
@@ -228,6 +235,7 @@ class Demo():
                 sock.close()
                 with self.__Sem_conn_change:
                     del self.__socket_pool[shortname]
+    '''<<< socket pool'''
 
     def __isRight_group(self, group):
         if group == self.__group:
@@ -252,6 +260,8 @@ class Demo():
                 print(text)
             else: return
 
+    '''for discovery >>>'''
+    #writen by @Liangyu Chen
     def __broadcast(self):
         try:
             broad = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -334,7 +344,10 @@ class Demo():
                     self.__echo_bc(f'debug: {name} - {ip}')
             else:
                 print('No connection has been found.')
+    '''<<< for discovery'''
 
+    '''WAN part >>>'''
+    #writen by @Tianhua Liu
     def __WAN_slot(self, target_name):
         socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         src_addr = ("", self.__port_WAN + self.__WAN_num)
@@ -395,7 +408,10 @@ class Demo():
                 self.__deleteConnection(target_name)
             else:
                 socket_.close()
+    '''<<< WAN part'''
 
+    '''LAN part >>>'''
+    #writen by @Tianhua Liu
     def __LAN_slot(self, sock):
         with self.__Sem_conns:
             try:
@@ -448,7 +464,10 @@ class Demo():
                     print(text)
                 else:
                     sock.close()
+    '''<<< LAN part'''
 
+    '''send api >>>'''
+    #writen by @Tianhua Liu
     def __send(self, targetname, text, type_):
         send_filter = SendType(self.__shortname, targetname)
         if targetname in self.__socket_pool:
@@ -466,7 +485,10 @@ class Demo():
         else:
             print(Dictionary['NO_USER'] + "-- connection to: " + targetname)
             return False
+    '''<<< send api'''
 
+    '''receive api >>>'''
+    #writen by @Tianhua Liu
     def __receive(self, sock, sendername, isDie):
         try:
             while True:
@@ -509,7 +531,9 @@ class Demo():
         finally:
             isDie[0] = True
             return
+    '''<<< receive api'''
 
+    #this can't be used now
     def __recvCHAT(self, targetname, param, sendername):
         if targetname == self.__shortname:
             sendername = param.split(':')[0]
@@ -519,6 +543,8 @@ class Demo():
             #TODO
             pass
 
+    '''routing part >>>'''
+    #writen by the @whole team
     def __recvINTEREST(self, param, sendername):
         #param = targetname/sensor_type/time
         dataname = param
@@ -591,7 +617,9 @@ class Demo():
                     self.__CS.add_cs_item(dataname, data)
                 with self.__Sem_FIB_change:
                     self.__FIB.update_fib(sendername, old_targetname)
+    '''<<< routing part'''
 
+    '''writen by @Liangyu Chen >>>'''
     def __getSensorData(self, data_path):
         #data_path = target_name/sensor_type/time
         if self.__Generator != None:
@@ -614,7 +642,10 @@ class Demo():
             return f'{year}-{month}-{day}_{hour};{minute}_<{device_type}-{data}>'
         else:
             return 'None'
+    '''<<< writen by Liangyu Chen'''
     
+    '''CLI and thread things >>>'''
+    #writen by @Tianhua Liu
     def __maintain_listen(self, socket_):
         try:
             while True:
@@ -855,6 +886,7 @@ class Demo():
             asyncio.run_until_complete(self.__main())
         else:
             asyncio.run(self.__main())
+    '''<<< CLI and thread things'''
 
 if __name__ == '__main__':
     os.system('clear')

@@ -1,5 +1,5 @@
+#writen by @Pruthvi Pai Padavu Naigara
 import threading
-
 
 class CS():
     def __init__(self):
