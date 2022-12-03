@@ -1,4 +1,4 @@
-#writen by @Pruthvi Pai Padavu Naigara
+#writen by @Liangyu Chen
 import threading
 
 class CS():
